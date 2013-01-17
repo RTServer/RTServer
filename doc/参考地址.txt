@@ -1,2 +1,2 @@
-XMPPЭ�飺
+XMPP协议：
 http://wiki.jabbercn.org/RFC3920
