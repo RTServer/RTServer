@@ -2,21 +2,25 @@
 gcc -o RTServer RTServer.c -lpthread
 */
 
-#include <netinet/in.h>    // for sockaddr_in
-#include <sys/types.h>    // for socket
-#include <sys/socket.h>    // for socket
-#include <stdio.h>        // for printf
-#include <stdlib.h>        // for exit
-#include <string.h>        // for bzero
-#include <pthread.h>
-#include <sys/errno.h>    // for errno
+#include <netinet/in.h>     // for sockaddr_in
+#include <sys/types.h>      // for socket
+#include <sys/socket.h>     // for socket
+#include <stdio.h>          // for printf
+#include <stdlib.h>         // for exit
+#include <string.h>         // for bzero
+#include <pthread.h>        // for pthread
+#include <sys/errno.h>      // for errno
 
-#define RTSERVER_PORT    5222 
+#define RTSERVER_PORT 5222 
 #define LENGTH_OF_LISTEN_QUEUE 20
 #define BUFFER_SIZE 1024
-#define THREAD_MAX    5
+#define THREAD_MAX 5
 void * talk_to_client(void *data) {
-    int new_server_socket = *((int*)data);
+    //这种写法虽然编译时不报任何错误，但是导致许多进程死链接
+    //int new_server_socket = *((int*)data);
+
+    //warning: cast from pointer to integer of different size [-Wpointer-to-int-cast]
+    int new_server_socket = (int)data;;
     char buffer[BUFFER_SIZE];
 
     bzero(buffer, BUFFER_SIZE);
@@ -30,8 +34,10 @@ void * talk_to_client(void *data) {
     int length = recv(new_server_socket, buffer, BUFFER_SIZE, 0);
     //int length = rcv(new_server_socket, buffer, BUFFER_SIZE, 0);
     if(length < 0) {
-        perror("Server Recieve Data Failed!\n");
-        //exit(1);
+        printf("Server Recieve Data Failed: %s\n",strerror(errno));
+        close(new_server_socket); 
+        pthread_exit(NULL);
+        exit(1);
     }
     printf("\nSocket Num: %d \t %s", new_server_socket, buffer);
 
@@ -114,19 +120,25 @@ int main(int argc, char **argv) {
     
     //把socket和socket地址结构联系起来
     if(bind(server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr))) {
-        printf("Server Bind Port : %d Failed!", RTSERVER_PORT); 
+        printf("Server Bind Port : %d Failed!", RTSERVER_PORT);
+        close(server_socket);
         exit(1);
     }
     
     //server_socket用于监听
     if(listen(server_socket, LENGTH_OF_LISTEN_QUEUE)) {
-        printf("Server Listen Failed!"); 
+        printf("Server Listen Failed!");
+        close(server_socket);
         exit(1);
     }
     
-    
-    while(1) //服务器端要一直运行
-    {
+    //多线程处理服务器和客户端通信(测试10000并发没问题)
+    pthread_t child_thread;
+    pthread_attr_t child_thread_attr;
+    pthread_attr_init(&child_thread_attr);
+    pthread_attr_setdetachstate(&child_thread_attr, PTHREAD_CREATE_DETACHED);
+
+    while(1) { //服务器端要一直运行
         //定义客户端的socket地址结构client_addr
         struct sockaddr_in client_addr;
         socklen_t length = sizeof(client_addr);
@@ -142,12 +154,11 @@ int main(int argc, char **argv) {
             break;
         }
 
-        //多线程处理服务器和客户端通信
-        pthread_t child_thread;
-        pthread_attr_t child_thread_attr;
-        pthread_attr_init(&child_thread_attr);
-        pthread_attr_setdetachstate(&child_thread_attr, PTHREAD_CREATE_DETACHED);
-        if(pthread_create(&child_thread, &child_thread_attr, talk_to_client, (void *)&new_server_socket) == -1)
+        //这种写法虽然编译时不报任何错误，但是导致许多进程死链接
+        //if(pthread_create(&child_thread, &child_thread_attr, talk_to_client, (void *)&new_server_socket) == -1)
+
+        //warning: cast to pointer from integer of different size [-Wint-to-pointer-cast]
+        if(pthread_create(&child_thread, &child_thread_attr, talk_to_client, (void *)new_server_socket) == -1)
             printf("pthread_create Failed : %s\n", strerror(errno));
     }
 
