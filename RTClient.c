@@ -16,8 +16,7 @@ gcc -o RTClient RTClient.c -lpthread
 
 #define MAXBUF 1024
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     int sockfd, len;
     struct sockaddr_in dest;
     char buf[MAXBUF + 1];
@@ -25,12 +24,12 @@ int main(int argc, char **argv)
     struct timeval tv;
     int retval, maxfd = -1;
 
-    if (argc != 3) {
-        printf("Usage: %s IP Port",argv[0]);
+    if(argc != 3) {
+        printf("Usage: %s IP Port", argv[0]);
         exit(0);
     }
 
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+    if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         perror("Socket");
         exit(errno);
     }
@@ -38,7 +37,7 @@ int main(int argc, char **argv)
     bzero(&dest, sizeof(dest));
     dest.sin_family = AF_INET;
     dest.sin_port = htons(atoi(argv[2]));
-    if (inet_aton(argv[1], (struct in_addr *) &dest.sin_addr.s_addr) == 0) {
+    if(inet_aton(argv[1], (struct in_addr *)&dest.sin_addr.s_addr) == 0) {
         perror(argv[1]);
         exit(errno);
     }
@@ -48,16 +47,15 @@ int main(int argc, char **argv)
         exit(errno);
     }
 
-    printf("connect to server...\n");        
-    while (1) 
-    {
+    printf("connected to server...\n");        
+    while (1) {
 
         FD_ZERO(&rfds);           
         FD_SET(0, &rfds);
         maxfd = 0;
 
         FD_SET(sockfd, &rfds);
-        if (sockfd > maxfd)
+        if(sockfd > maxfd)
             maxfd = sockfd;
 
         tv.tv_sec = 1;
@@ -65,40 +63,34 @@ int main(int argc, char **argv)
 
         retval = select(maxfd + 1, &rfds, NULL, NULL, &tv);
 
-        if (retval == -1) 
-        {
+        if (retval == -1) {
             printf("select error! %s", strerror(errno));              
             break;
         } else if (retval == 0) {
              //printf("no msg,no key, and continue to wait……\n"); 
             continue;
         } else {
-            if (FD_ISSET(0, &rfds)) 
-            {                
+            if(FD_ISSET(0, &rfds)) {                
                 bzero(buf, MAXBUF + 1);
                 fgets(buf, MAXBUF, stdin);                
-                if (!strncasecmp(buf, "quit", 4)) 
-                {
+                if(!strncasecmp(buf, "quit", 4)) {
                     printf("request terminal chat！\n");
                     break;
                 }
                 len = send(sockfd, buf, strlen(buf) - 1, 0);
-                if (len > 0)
+                if(len > 0)
                     printf("msg:%s send successful，totalbytes: %d！\n", buf, len);
                 else {
                     printf("msg:'%s  failed!\n", buf);
                     break;
                 }
-            }
-            else if (FD_ISSET(sockfd, &rfds)) 
-            { 
+            }else if (FD_ISSET(sockfd, &rfds)) { 
                 bzero(buf, MAXBUF + 1);
                 len = recv(sockfd, buf, MAXBUF, 0);
-                if (len > 0)
+                if(len > 0)
                     printf("recv:'%s, total: %d \n", buf, len);
-                else  
-                {
-                    if (len < 0) 
+                else {
+                    if(len < 0) 
                         printf("recv failed！errno:%d，error msg: '%s'\n", errno, strerror(errno));
                     else
                         printf("other exit，terminal chat\n");
