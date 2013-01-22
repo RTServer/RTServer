@@ -5,6 +5,7 @@
 207.97.227.243  raw.github.com
 204.232.175.78  documentcloud.github.com
 204.232.175.78  pages.github.com
+23.0.165.8		a248.e.akamai.net
 
 2.设置权限：
 ssh-keygen -t rsa -C net.bsh@gmail.com				#改成自己的
