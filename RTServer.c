@@ -42,39 +42,13 @@ TCP6: inuse 3UDP6: inuse 0RAW6: inuse 0 FRAG6: inuse 0 memory 0
 
 #define MAXBUF 1024
 
-void recv_and_send(int sockfd, int i, fd_set allset);
-
 typedef struct CLIENT {
     int fd;
     struct sockaddr_in addr;    
 }CLIENT;
 
-//定义全局变量
-char buf[MAXBUF + 1];
-CLIENT client[FD_SETSIZE]; //看看这个值多大 printf("%d\n", FD_SETSIZE);  1024
-
-void recv_and_send(int sockfd, int i, fd_set allset) {
-    int n = 0;
-
-    bzero(buf, MAXBUF + 1);
-    if((n = recv(sockfd, buf, MAXBUF, 0)) > 0) {
-        printf("received data:%s from %s \n", buf, inet_ntoa(client[i].addr.sin_addr));
-
-        //向客户端发消息
-        bzero(buf, MAXBUF + 1);
-        int id = 2632355281;
-        sprintf(buf, "<?xml version='1.0'?><stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' id='%d' from='192.168.180.128' version='1.0' xml:lang='en'><stream:features><starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/><mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'><mechanism>PLAIN</mechanism></mechanisms><c xmlns='http://jabber.org/protocol/caps' hash='sha-1' node='http://www.process-one.net/en/ejabberd/' ver='k87lIPU+P82FgFI2M+F2/LglysI='/><register xmlns='http://jabber.org/features/iq-register'/></stream:features>", id);
-        send(sockfd, buf, strlen(buf), 0);
-    }else { //客户端退出时
-        printf("disconnected by client!\n");
-        close(sockfd);
-        FD_CLR(sockfd, &allset);
-        client[i].fd = -1;
-    }
-}
-
 int main(int argc, char** argv) {
-    int i, maxi = -1;
+    int i, n, maxi = -1;
     int nready;
     int slisten, sockfd, maxfd = -1, connectfd;
     
@@ -85,6 +59,9 @@ int main(int argc, char** argv) {
     
     socklen_t len;
     fd_set rset, allset;
+
+    char buf[MAXBUF + 1];
+    CLIENT client[FD_SETSIZE]; //看看这个值多大 printf("%d\n", FD_SETSIZE);  1024
 
     //第一个参数：端口号
     if(argv[1]) 
@@ -129,8 +106,7 @@ int main(int argc, char** argv) {
     FD_SET(slisten, &allset);  
     maxfd = slisten;
     
-    printf("Waiting for connections and data...\n");
-
+    printf("等待连接和数据...\n");
     while(1) {
         rset = allset;            
 
@@ -167,7 +143,7 @@ int main(int argc, char** argv) {
                         client[i].fd = connectfd;
                         client[i].addr = addr;
                         //打印客户端ip             
-                        printf("Yout got a connection from %s.\n", inet_ntoa(client[i].addr.sin_addr));
+                        printf("有客户端接入了 IP:%s\n\n", inet_ntoa(client[i].addr.sin_addr));
                         break;
                     }
                 }
@@ -178,13 +154,49 @@ int main(int argc, char** argv) {
                     maxfd = connectfd;
                 if(i > maxi)
                     maxi = i;
-            }else {     
-                for(i = 0; i <= maxi; i++) {
-                    printf("%d ", i);       
+            }else {
+                for(i = 0; i <= maxi; i++) {   
                     if((sockfd = client[i].fd) < 0)
                         continue;
                     if(FD_ISSET(sockfd, &rset)) { //接收客户端信息
-                        recv_and_send(sockfd, i, allset);
+                        bzero(buf, MAXBUF + 1);
+                        if((n = recv(sockfd, buf, MAXBUF, 0)) > 0) {
+                            //printf("第%d个客户端 IP:%s\n", i + 1, inet_ntoa(client[i].addr.sin_addr));
+
+                            if(n == 120) {
+                                //1.接收客户端消息
+                                printf("CLIENT-接收数据:%s\n", buf);
+
+                                //2.向客户端发消息
+                                bzero(buf, MAXBUF + 1);
+                                int id = 26323;
+                                sprintf(buf, "<?xml version='1.0'?><stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' id='%d' from='192.168.180.128' version='1.0' xml:lang='en'><stream:features><starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/><mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'><mechanism>PLAIN</mechanism></mechanisms><c xmlns='http://jabber.org/protocol/caps' hash='sha-1' node='http://www.process-one.net/en/ejabberd/' ver='k87lIPU+P82FgFI2M+F2/LglysI='/><register xmlns='http://jabber.org/features/iq-register'/></stream:features>", id);
+                                printf("SERVER-发送数据:%s\n", buf);
+                                send(sockfd, buf, strlen(buf), 0);
+
+                                //3.一次交互结束
+                                printf("\n");
+                            }else if(n == 51) {
+                                //1.接收客户端消息
+                                printf("CLIENT-接收数据:%s\n", buf);
+
+                                //2.向客户端发消息
+                                bzero(buf, MAXBUF + 1);
+                                sprintf(buf, "<proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");
+                                printf("SERVER-发送数据:%s\n", buf);
+                                send(sockfd, buf, strlen(buf), 0);
+
+                                //3.一次交互结束
+                                printf("\n");
+                            }else if(n == 16) {
+                                //同样的方法进行测试
+                            }
+                        }else { //客户端退出时
+                            printf("客户端退出了\n");
+                            close(sockfd);
+                            FD_CLR(sockfd, &allset);
+                            client[i].fd = -1;
+                        }
                     }
                 }
             }

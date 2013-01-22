@@ -1,5 +1,13 @@
 /**
 gcc -o RTClient RTClient.c -lpthread
+
+可以用jabbercn.org(113.105.65.227)这个公共服务测试
+./RTClient 113.105.65.227 5222
+C:<stream:stream to="jabbercn.org" xmlns="jabber:client" xmlns:stream="http://etherx.jabber.org/streams" version="1.0">
+S:<?xml version='1.0'?><stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' id='78329114' from='jabbercn.org' version='1.0' xml:lang='en'><stream:features><starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/><mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'><mechanism>PLAIN</mechanism></mechanisms><c xmlns='http://jabber.org/protocol/caps' hash='sha-1' node='http://www.process-one.net/en/ejabberd/' ver='k87lIPU+P82FgFI2M+F2/LglysI='/><register xmlns='http://jabber.org/features/iq-register'/></stream:features>
+
+C:<starttls xmlns="urn:ietf:params:xml:ns:xmpp-tls"/>
+S:<proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
 */
 
 #include <stdio.h>
@@ -47,7 +55,7 @@ int main(int argc, char **argv) {
         exit(errno);
     }
 
-    printf("connected to server...\n");        
+    printf("等待连接和数据...\n");        
     while (1) {
 
         FD_ZERO(&rfds);           
@@ -74,26 +82,26 @@ int main(int argc, char **argv) {
                 bzero(buf, MAXBUF + 1);
                 fgets(buf, MAXBUF, stdin);                
                 if(!strncasecmp(buf, "quit", 4)) {
-                    printf("request terminal chat！\n");
+                    printf("退出连接\n");
                     break;
                 }
                 len = send(sockfd, buf, strlen(buf) - 1, 0);
                 if(len > 0)
-                    printf("msg:%s send successful，totalbytes: %d！\n", buf, len);
+                    printf("发送成功 长度:%d\n", len);
                 else {
-                    printf("msg:'%s  failed!\n", buf);
+                    printf("发送失败\n");
                     break;
                 }
             }else if (FD_ISSET(sockfd, &rfds)) { 
                 bzero(buf, MAXBUF + 1);
                 len = recv(sockfd, buf, MAXBUF, 0);
                 if(len > 0)
-                    printf("recv:'%s, total: %d \n", buf, len);
+                    printf("接收数据:%s\n", buf);
                 else {
                     if(len < 0) 
-                        printf("recv failed！errno:%d，error msg: '%s'\n", errno, strerror(errno));
+                        printf("接收失败 错误号:%d，错误信息: '%s'\n", errno, strerror(errno));
                     else
-                        printf("other exit，terminal chat\n");
+                        printf("退出连接\n");
                     break;
                 }
             }                
