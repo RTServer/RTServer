@@ -27,181 +27,175 @@ TCP6: inuse 3UDP6: inuse 0RAW6: inuse 0 FRAG6: inuse 0 memory 0
 查看/proc/pid/status可以看到一些进程的当前状态：
 */
 
-#include <netinet/in.h>     // for sockaddr_in
-#include <sys/types.h>      // for socket
-#include <sys/socket.h>     // for socket
-#include <stdio.h>          // for printf
-#include <stdlib.h>         // for exit
-#include <string.h>         // for bzero
-#include <pthread.h>        // for pthread
-#include <sys/errno.h>      // for errno
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
-#define RTSERVER_PORT 5222 
-#define LENGTH_OF_LISTEN_QUEUE 20
-#define BUFFER_SIZE 1024
-#define MAX_THREAD_NUM 10000
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/wait.h>
+#include <sys/time.h>
 
-int thread_count = 0;
-pthread_t threads[MAX_THREAD_NUM];
-void * talk_to_client(void *data);
+#define MAXBUF 1024
 
-void * talk_to_client(void *data) {
-    //这种写法虽然编译时不报任何错误，但是导致许多进程死链接
-    //int new_server_socket = *((int*)data);
+void recv_and_send(int sockfd, int i, fd_set allset);
 
-    //warning: cast from pointer to integer of different size [-Wpointer-to-int-cast]
-    int new_server_socket = (int)data;;
-    char buffer[BUFFER_SIZE];
+typedef struct CLIENT {
+    int fd;
+    struct sockaddr_in addr;    
+}CLIENT;
 
-    bzero(buffer, BUFFER_SIZE);
-    //strcpy(buffer, "Hello,World! 从服务器来！");
-    sprintf(buffer, "Hello,World! 从服务器来！处理线程:\t%d", thread_count);
-    strcat(buffer, "\n"); //C语言字符串连接
-    //发送buffer中的字符串到new_server_socket,实际是给客户端
-    send(new_server_socket, buffer, BUFFER_SIZE, 0);
+//定义全局变量
+char buf[MAXBUF + 1];
+CLIENT client[FD_SETSIZE]; //看看这个值多大 printf("%d\n", FD_SETSIZE);  1024
 
-    bzero(buffer, BUFFER_SIZE);
-    //接收客户端发送来的信息到buffer中
-    //int length = rcv(new_server_socket, buffer, BUFFER_SIZE, 0);
-    int length = 0;
-    while(length = recv(new_server_socket, buffer, BUFFER_SIZE, MSG_WAITALL)) {
-        if(length < 0) {
-            printf("Server Recieve Data Failed: %s\n", strerror(errno));
-        }
-        printf("\nSocket Num: %d \t %s", new_server_socket, buffer);
-        bzero(buffer, BUFFER_SIZE);
+void recv_and_send(int sockfd, int i, fd_set allset) {
+    int n = 0;
+
+    bzero(buf, MAXBUF + 1);
+    if((n = recv(sockfd, buf, MAXBUF, 0)) > 0) {
+        printf("received data:%s from %s \n", buf, inet_ntoa(client[i].addr.sin_addr));
+
+        //向客户端发消息
+        bzero(buf, MAXBUF + 1);
+        int id = 2632355281;
+        sprintf(buf, "<?xml version='1.0'?><stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' id='%d' from='192.168.180.128' version='1.0' xml:lang='en'><stream:features><starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/><mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'><mechanism>PLAIN</mechanism></mechanisms><c xmlns='http://jabber.org/protocol/caps' hash='sha-1' node='http://www.process-one.net/en/ejabberd/' ver='k87lIPU+P82FgFI2M+F2/LglysI='/><register xmlns='http://jabber.org/features/iq-register'/></stream:features>", id);
+        send(sockfd, buf, strlen(buf), 0);
+    }else { //客户端退出时
+        printf("disconnected by client!\n");
+        close(sockfd);
+        FD_CLR(sockfd, &allset);
+        client[i].fd = -1;
     }
-
-    //关闭与客户端的连接
-    close(new_server_socket); 
-    //pthread_exit(NULL);
 }
 
-/**
-参数解释：
-sck - socket
-buf - 接收缓冲区
-size-缓冲区大小
-time_out-等待时间（按秒计）如果超时则返回
-返回值：收到字节数，0表示超时等错误
-*/
-int rcv(int sck, void * buf, int size, int time_out) {
-	if(sck < 1 || !buf || size < 1)
-		return 0;
-	struct timeval tv = {0, 0};
-	struct timeval * ptv = 0;
-	if(time_out > 0) {
-		tv.tv_sec = time_out;
-		ptv = &tv;
-	}
-	memset(buf, 0, size);
-	int r = 0;
-	char * b = (char*) buf;
-	int sz = size; 
-	fd_set rd, er;
-	int total = 0;
-	time_t t0 = time(0);
-	time_t t1 = 0;
-	do {
-		FD_ZERO(&rd);
-		FD_SET(sck, &rd);
-		FD_ZERO(&er);
-		FD_SET(sck, &er);
-		r = select(sck + 1, &rd, 0, &er, ptv);
-		if(r == -1) {
-			perror("select()");
-			return -1;
-		}
-		if(FD_ISSET(sck, &er)) {
-			perror("socket(shutdown)");
-			return -1;
-		}
-		if(FD_ISSET(sck, &rd)) {
-			r = recv(sck, b, sz, 0);
-			if(r == -1) {
-				perror("recv()");
-				return -1;
-			}
-			total += r; sz -= r; b+= r;
-		}
-		if (time_out > 0)
-			t1 = time(0) - t0;
-		else
-			t1 = time_out - 1;
-	}while(sz && t1 < time_out);
+int main(int argc, char** argv) {
+    int i, maxi = -1;
+    int nready;
+    int slisten, sockfd, maxfd = -1, connectfd;
+    
+    unsigned int myport, lisnum; 
 
-	return total;
-}
+    struct sockaddr_in my_addr, addr;
+    struct timeval tv;
+    
+    socklen_t len;
+    fd_set rset, allset;
 
-int main(int argc, char **argv) {
+    //第一个参数：端口号
+    if(argv[1]) 
+        myport = atoi(argv[1]); //将字符串转换成整形
+    else
+        myport = 5222;
+
+    //第二个参数：最大监听数
+    if(argv[2])
+        lisnum = atoi(argv[2]);
+    else 
+        lisnum = FD_SETSIZE;
+
     //创建用于internet的流协议(TCP)socket,用server_socket代表服务器socket
-    //int server_socket = socket(AF_INET, SOCK_STREAM, 0);
-    int server_socket = socket(PF_INET, SOCK_STREAM, 0);
-    if(server_socket < 0) {
-        printf("Create Socket Failed!");
-        return EXIT_FAILURE;
+    if((slisten = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+        perror("socket");
+        exit(1);
     }
 
-    {
-        int opt = 1;
-        setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    bzero(&my_addr, sizeof(my_addr));
+    my_addr.sin_family = AF_INET;
+    my_addr.sin_port = htons(myport);
+    my_addr.sin_addr.s_addr = INADDR_ANY;
+
+    if(bind(slisten, (struct sockaddr *)&my_addr, sizeof(my_addr)) == -1) {
+        perror("bind");
+        exit(1);
     }
 
-    //设置一个socket地址结构server_addr,代表服务器internet地址, 端口
-    struct sockaddr_in server_addr;
+    //listen(sockfd, LENGTH_OF_LISTEN_QUEUE);
+    if(listen(slisten, lisnum) == -1) {
+        perror("listen");
+        exit(1);
+    }
 
-    bzero(&server_addr, sizeof(server_addr)); //把一段内存区的内容全部设置为0
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = htons(INADDR_ANY);
-    server_addr.sin_port = htons(RTSERVER_PORT);
+    //初始化客户端对象
+    for(i = 0; i < FD_SETSIZE; i++) {
+        client[i].fd = -1;
+    }
+
+    FD_ZERO(&allset);           
+    FD_SET(slisten, &allset);  
+    maxfd = slisten;
     
-    //绑定端口, 把socket和socket地址结构联系起来
-    if(bind(server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr))) {
-        printf("Server Bind Port : %d Failed!", RTSERVER_PORT);
-        return EXIT_FAILURE;
+    printf("Waiting for connections and data...\n");
+
+    while(1) {
+        rset = allset;            
+
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
+        /**
+        Select在Socket编程中还是比较重要的，可是对于初学Socket的人来说都不太爱用Select写程序，
+        他们只是习惯写诸如connect、accept、recv或recvfrom这样的阻塞程序（所谓阻塞方式block，
+        顾名思义，就是进程或是线程执行到这些函数时必须等待某个事件的发生，如果事件没有发生，
+        进程或线程就被阻塞，函数不能立即返回）。可是使用Select就可以完成非阻塞（所谓非阻塞方
+        式non-block，就是进程或线程执行此函数时不必非要等待事件的发生，一旦执行肯定返回，
+        以返回值的不同来反映函数的执行情况，如果事件发生则与阻塞方式相同，若事件没有发生则返回
+        一个代码来告知事件未发生，而进程或线程继续执行，所以效率较高）方式工作的程序，它能够监
+        视我们需要监视的文件描述符的变化情况——读写或是异常。
+        int select(int maxfdp,fd_set *readfds,fd_set *writefds,fd_set *errorfds,struct timeval *timeout);
+        */
+        nready = select(maxfd + 1, &rset, NULL, NULL, &tv);
+
+        if(nready == 0)
+            continue;
+        else if(nready < 0) {
+            printf("select failed!\n");
+            break;
+        }else {
+            if(FD_ISSET(slisten, &rset)) { // new connection
+                len = sizeof(struct sockaddr);
+                if((connectfd = accept(slisten, (struct sockaddr*)&addr, &len)) == -1) {
+                    perror("accept() error\n");
+                    continue;
+                }
+                //找到客户端对象中可用的并赋值
+                for(i = 0; i < FD_SETSIZE; i++) {
+                    if(client[i].fd < 0) {
+                        client[i].fd = connectfd;
+                        client[i].addr = addr;
+                        //打印客户端ip             
+                        printf("Yout got a connection from %s.\n", inet_ntoa(client[i].addr.sin_addr));
+                        break;
+                    }
+                }
+                if(i == FD_SETSIZE)            
+                    printf("too many connections"); //连接数太多           
+                FD_SET(connectfd, &allset);
+                if(connectfd > maxfd)
+                    maxfd = connectfd;
+                if(i > maxi)
+                    maxi = i;
+            }else {     
+                for(i = 0; i <= maxi; i++) {
+                    printf("%d ", i);       
+                    if((sockfd = client[i].fd) < 0)
+                        continue;
+                    if(FD_ISSET(sockfd, &rset)) { //接收客户端信息
+                        recv_and_send(sockfd, i, allset);
+                    }
+                }
+            }
+        }    
     }
-    
-    //server_socket用于监听
-    if(listen(server_socket, LENGTH_OF_LISTEN_QUEUE)) {
-        printf("Server Listen Failed!");
-        return EXIT_FAILURE;
-    }
-     
-
-    //多线程处理服务器和客户端通信(测试10000并发没问题)
-    // 开始处理客户端连接
-    bzero(&threads, sizeof(pthread_t) * MAX_THREAD_NUM);
-    pthread_attr_t child_thread_attr;
-    pthread_attr_init(&child_thread_attr);
-    pthread_attr_setdetachstate(&child_thread_attr, PTHREAD_CREATE_DETACHED);
-
-    while(1) { //服务器端要一直运行
-        //定义客户端的socket地址结构client_addr
-        struct sockaddr_in client_addr;
-        socklen_t length = sizeof(client_addr);
-
-        //接受一个到server_socket代表的socket的一个连接
-        //如果没有连接请求,就等待到有连接请求--这是accept函数的特性
-        //accept函数返回一个新的socket,这个socket(new_server_socket)用于同连接到的客户的通信
-        //new_server_socket代表了服务器和客户端之间的一个通信通道
-        //accept函数把连接到的客户端信息填写到客户端的socket地址结构client_addr中
-        int new_server_socket = accept(server_socket, (struct sockaddr*)&client_addr, &length);
-        if(new_server_socket < 0) {
-            printf("Server Accept Failed!\n");
-            return EXIT_FAILURE;
-        }
-
-        //这种写法虽然编译时不报任何错误，但是导致许多进程死链接
-        //if(pthread_create(&child_thread, &child_thread_attr, talk_to_client, (void *)&new_server_socket) == -1)
-
-        //warning: cast to pointer from integer of different size [-Wint-to-pointer-cast]
-        if(pthread_create(threads + (thread_count++), &child_thread_attr, (void *)talk_to_client, (void *)new_server_socket) == -1) {
-            printf("pthread_create Failed : %s\n", strerror(errno));
-            return EXIT_FAILURE;
-        }
-    }
-
-    //关闭监听用的socket
-    close(server_socket);
-    return EXIT_FAILURE;
+    close(slisten);
 }
+
+207.97.227.239  github.com
+65.74.177.129   www.github.com
+207.97.227.252  nodeload.github.com
+207.97.227.243  raw.github.com
+204.232.175.78  documentcloud.github.com
+204.232.175.78  pages.github.com
