@@ -165,31 +165,40 @@ int main(int argc, char** argv) {
 
                             if(n == 120) {
                                 //1.接收客户端消息
-                                printf("CLIENT-接收数据:%s\n", buf);
+                                printf("CLIENT-%d-接收数据:%s\n", sockfd, buf);
 
                                 //2.向客户端发消息
                                 bzero(buf, MAXBUF + 1);
                                 int id = 26323;
                                 sprintf(buf, "<?xml version='1.0'?><stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' id='%d' from='192.168.180.128' version='1.0' xml:lang='en'><stream:features><starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/><mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'><mechanism>PLAIN</mechanism></mechanisms><c xmlns='http://jabber.org/protocol/caps' hash='sha-1' node='http://www.process-one.net/en/ejabberd/' ver='k87lIPU+P82FgFI2M+F2/LglysI='/><register xmlns='http://jabber.org/features/iq-register'/></stream:features>", id);
-                                printf("SERVER-发送数据:%s\n", buf);
+                                printf("SERVER-s-发送数据:%s\n", buf);
                                 send(sockfd, buf, strlen(buf), 0);
 
                                 //3.一次交互结束
                                 printf("\n");
                             }else if(n == 51) {
                                 //1.接收客户端消息
-                                printf("CLIENT-接收数据:%s\n", buf);
+                                printf("CLIENT-%d-接收数据:%s\n", sockfd, buf);
 
                                 //2.向客户端发消息
                                 bzero(buf, MAXBUF + 1);
                                 sprintf(buf, "<proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");
-                                printf("SERVER-发送数据:%s\n", buf);
+                                printf("SERVER-s-发送数据:%s\n", buf);
                                 send(sockfd, buf, strlen(buf), 0);
 
                                 //3.一次交互结束
                                 printf("\n");
                             }else if(n == 16) {
                                 //同样的方法进行测试
+                            }else { //实现两个客户端通信
+                                printf("CLIENT-%d-发送的数据:%s\n", sockfd, buf);
+                                int to;
+                                if(i == 0) {
+                                    to = client[1].fd;
+                                }else if (i == 1) {
+                                    to = client[0].fd;
+                                }   
+                                send(to, buf, strlen(buf), 0);                            
                             }
                         }else { //客户端退出时
                             printf("客户端退出了\n");
