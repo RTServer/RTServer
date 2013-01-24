@@ -3,10 +3,11 @@ RTServer
 
 Real Time Server
 
-bishenghua zhuna zhaiyanbin
+bishenghua zhuna zhaiyanbin yuanjing
 
 cmd:
 mkdir RTServer
+cd RTServer
 git init
 git config --global user.email net.bsh@gmail.com
 git config --global user.name bishenghua
