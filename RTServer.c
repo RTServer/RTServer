@@ -1,5 +1,5 @@
 /**
-gcc -o RTServer RTServer.c -lpthread
+gcc -o RTServer RTServer.c clientctrl.h clientctrl.c parsexml.h parsexml.c -lpthread `xml2-config --cflags --libs`
 
 服务器的TCP状态(连接状态数量统计)
 netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'
@@ -31,24 +31,14 @@ TCP6: inuse 3UDP6: inuse 0RAW6: inuse 0 FRAG6: inuse 0 memory 0
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
-#include <unistd.h>
-#include <arpa/inet.h>
 #include <netinet/in.h>
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/wait.h>
-#include <sys/time.h>
+#include "clientctrl.h"
 
-#define MAXBUF 1024
-
-typedef struct CLIENT {
-    int fd;
-    struct sockaddr_in addr;    
-}CLIENT;
+#define MAX_LENGTH 1024
 
 int main(int argc, char** argv) {
-    int i, n, maxi = -1;
+    int i, maxi = -1;
     int nready;
     int slisten, sockfd, maxfd = -1, connectfd;
     
@@ -60,9 +50,6 @@ int main(int argc, char** argv) {
     socklen_t len;
     fd_set rset, allset;
 
-    char buf[MAXBUF + 1];
-    CLIENT client[FD_SETSIZE]; //看看这个值多大 printf("%d\n", FD_SETSIZE);  1024
-
     //第一个参数：端口号
     if(argv[1]) 
         myport = atoi(argv[1]); //将字符串转换成整形
@@ -73,7 +60,7 @@ int main(int argc, char** argv) {
     if(argv[2])
         lisnum = atoi(argv[2]);
     else 
-        lisnum = FD_SETSIZE;
+        lisnum = MAX_LENGTH;
 
     //创建用于internet的流协议(TCP)socket,用server_socket代表服务器socket
     if((slisten = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -98,9 +85,7 @@ int main(int argc, char** argv) {
     }
 
     //初始化客户端对象
-    for(i = 0; i < FD_SETSIZE; i++) {
-        client[i].fd = -1;
-    }
+    client_init();
 
     FD_ZERO(&allset);           
     FD_SET(slisten, &allset);  
@@ -137,18 +122,12 @@ int main(int argc, char** argv) {
                     perror("accept() error\n");
                     continue;
                 }
-                //找到客户端对象中可用的并赋值
-                for(i = 0; i < FD_SETSIZE; i++) {
-                    if(client[i].fd < 0) {
-                        client[i].fd = connectfd;
-                        client[i].addr = addr;
-                        //打印客户端ip             
-                        printf("有客户端接入了 IP:%s\n\n", inet_ntoa(client[i].addr.sin_addr));
-                        break;
-                    }
+
+                if((i = client_add(connectfd, addr)) == -1) { //连接数太多
+                    close(connectfd); //退出客户端
+                    continue;
                 }
-                if(i == FD_SETSIZE)            
-                    printf("too many connections"); //连接数太多           
+
                 FD_SET(connectfd, &allset);
                 if(connectfd > maxfd)
                     maxfd = connectfd;
@@ -156,55 +135,14 @@ int main(int argc, char** argv) {
                     maxi = i;
             }else {
                 for(i = 0; i <= maxi; i++) {   
-                    if((sockfd = client[i].fd) < 0)
+                    if((sockfd = client_getconfd(i)) < 0)
                         continue;
                     if(FD_ISSET(sockfd, &rset)) { //接收客户端信息
-                        bzero(buf, MAXBUF + 1);
-                        if((n = recv(sockfd, buf, MAXBUF, 0)) > 0) {
-                            //printf("第%d个客户端 IP:%s\n", i + 1, inet_ntoa(client[i].addr.sin_addr));
-
-                            if(n == 120) {
-                                //1.接收客户端消息
-                                printf("CLIENT-%d-接收数据:%s\n", sockfd, buf);
-
-                                //2.向客户端发消息
-                                bzero(buf, MAXBUF + 1);
-                                int id = 26323;
-                                sprintf(buf, "<?xml version='1.0'?><stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' id='%d' from='192.168.180.128' version='1.0' xml:lang='en'><stream:features><starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/><mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'><mechanism>PLAIN</mechanism></mechanisms><c xmlns='http://jabber.org/protocol/caps' hash='sha-1' node='http://www.process-one.net/en/ejabberd/' ver='k87lIPU+P82FgFI2M+F2/LglysI='/><register xmlns='http://jabber.org/features/iq-register'/></stream:features>", id);
-                                printf("SERVER-s-发送数据:%s\n", buf);
-                                send(sockfd, buf, strlen(buf), 0);
-
-                                //3.一次交互结束
-                                printf("\n");
-                            }else if(n == 51) {
-                                //1.接收客户端消息
-                                printf("CLIENT-%d-接收数据:%s\n", sockfd, buf);
-
-                                //2.向客户端发消息
-                                bzero(buf, MAXBUF + 1);
-                                sprintf(buf, "<proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");
-                                printf("SERVER-s-发送数据:%s\n", buf);
-                                send(sockfd, buf, strlen(buf), 0);
-
-                                //3.一次交互结束
-                                printf("\n");
-                            }else if(n == 16) {
-                                //同样的方法进行测试
-                            }else { //实现两个客户端通信
-                                printf("CLIENT-%d-发送的数据:%s\n", sockfd, buf);
-                                int to;
-                                if(i == 0) {
-                                    to = client[1].fd;
-                                }else if (i == 1) {
-                                    to = client[0].fd;
-                                }   
-                                send(to, buf, strlen(buf), 0);                            
-                            }
-                        }else { //客户端退出时
+                        if (!client_interface(sockfd, i)) {
                             printf("客户端退出了\n");
                             close(sockfd);
                             FD_CLR(sockfd, &allset);
-                            client[i].fd = -1;
+                            client_clearn(i);
                         }
                     }
                 }
