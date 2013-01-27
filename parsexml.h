@@ -1,1 +1,1 @@
-extern int xml_parse(const char * xml);
+extern int xml_parse(const char *xml);
