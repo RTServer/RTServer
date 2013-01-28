@@ -91,7 +91,9 @@ int client_interface(int sockfd, int i) {
     if((n = recv(sockfd, buf, MAX_BUF, 0)) > 0) {
         //printf("第%d个客户端 IP:%s\n", i + 1, inet_ntoa(_client[i].addr.sin_addr));
         //解析XML
-        xml_parse(buf);
+        xmlnode_init(); //初始化xml存储
+        xmlnode_parse(buf);
+        xmlnode_print(-1);
 
         if(n == 120) {
             //1.接收客户端消息

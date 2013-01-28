@@ -14,21 +14,23 @@ typedef struct _XMLNODE {
     int n; //第几个节点，作为唯一值，初始化时置为-1
     int deep; //深度，0为根节点
     int nextDeep; //下一个节点的深度
-    char name; //名称
-    char content; //内容
-    char **attr; //属性
+    char name[10]; //名称
+    char content[MAX_CONTENT_LENG]; //内容
+    char attr[256]; //属性
 }_XMLNODE;
 
 //定义全局变量
 static _XMLNODE _xmlnode[MAX_XMLNODE_LENG]; //模块化全局变量_xmlnode
+static _n = -1;
 
 /**
 * 函数声明
 */
 void xmlnode_init();
-int xmlnode_add(int deep, int nextDeep, char name, char content, char **attr);
+void xmlnode_print(int n);
+int xmlnode_parse(const char *xml);
 static void element_parse(xmlNode *aNode);
-int xml_parse(const char *xml);
+
 
 /**
 * 函数体
@@ -36,30 +38,34 @@ int xml_parse(const char *xml);
 
 void xmlnode_init() {
     int i;
+    _n = -1;
     for(i = 0; i < MAX_XMLNODE_LENG; i++) {
         _xmlnode[i].n = -1;
     }
 }
 
-int xmlnode_add(int deep, int nextDeep, char name, char content, char **attr) {
-    int i;
-    for(i = 0; i < MAX_XMLNODE_LENG; i++) {
-        if(_xmlnode[i].n == -1) {
-            _xmlnode[i].deep = deep;
-            _xmlnode[i].nextDeep = nextDeep;
-            _xmlnode[i].name = name;
-            _xmlnode[i].content = content;
-            _xmlnode[i].attr = attr;
-            break;
+void xmlnode_print(int n) {
+    int i, j, k;
+    if(n == -1) {
+        j = 0;
+        k = _n;
+    }else {
+        if(n > _n) {
+            printf("%s\n", "超范围了");
+            return;
         }
+        j = n;
+        k = n + 1;
     }
-    if(i == MAX_XMLNODE_LENG) {
-        return -1;
+    for(i = j; i < k; i++) {
+        printf("%s\n", _xmlnode[i].name);
+        if(strlen(_xmlnode[i].attr)) printf("%s\n", _xmlnode[i].attr);
+        if(strlen(_xmlnode[i].content))printf("%s\n", _xmlnode[i].content);
+        printf("\n");
     }
-    return i;
 }
 
-int xml_parse(const char *xml) {
+int xmlnode_parse(const char *xml) {
     xmlDocPtr doc;    
     xmlNode *rootElement = NULL;
 
@@ -71,7 +77,6 @@ int xml_parse(const char *xml) {
     }
 
     rootElement = xmlDocGetRootElement(doc);
-    xmlnode_init(); //初始化xml存储
     element_parse(rootElement);
 
     xmlFreeDoc(doc);
@@ -86,24 +91,19 @@ static void element_parse(xmlNode *aNode) {
     int count = 0;
     char key[256];
 
-    for (curNode = aNode; curNode; curNode = curNode->next) {
-        //printf("node type:%d---", curNode->type);
+    for(curNode = aNode; curNode; curNode = curNode->next) {
         switch(curNode->type) {
             case XML_ELEMENT_NODE:
-                printf("\n");
-                //打印节点名称
-                printf("NodeName:\t%s\n", curNode->name);
+                _n++;
+                //节点名称
+                bzero(_xmlnode[_n].name, 10);
+                strncat(_xmlnode[_n].name, curNode->name, strlen(curNode->name));
 
-                //打印属性
+                //属性
                 attrPtr = curNode->properties;
                 bzero(key, 256);
-                //strcpy(key, "AttrName:\t");
-                //sprintf(key, "AttrName:\t");
-                strncat(key, "AttrName:\t", 10);
                 while(attrPtr != NULL) {
                     szAttr = xmlGetProp(curNode, BAD_CAST attrPtr->name);
-                    //sprintf(key, "%s:%s\t", attrPtr->name, szAttr);
-                    //printf("%s:%s\t", attrPtr->name, szAttr);
                     strncat(key, attrPtr->name, strlen(attrPtr->name));
                     strncat(key, ":", 1);
                     strncat(key, szAttr, strlen(szAttr));
@@ -111,12 +111,14 @@ static void element_parse(xmlNode *aNode) {
                     xmlFree(szAttr);
                     attrPtr = attrPtr->next;
                 }
-                if(strlen(key) > 10) printf("%s\n", key);
+                bzero(_xmlnode[_n].attr, 256);
+                strncat(_xmlnode[_n].attr, key, strlen(key));
                 break;
             case XML_TEXT_NODE:
-                //打印内容
+                //内容
                 szKey = xmlNodeGetContent(curNode);
-                printf("Content:\t%s\n", szKey);
+                bzero(_xmlnode[_n].content, MAX_CONTENT_LENG);
+                strncat(_xmlnode[_n].content, szKey, strlen(szKey));
                 xmlFree(szKey);
                 break;
         }
