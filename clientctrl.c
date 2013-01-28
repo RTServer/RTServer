@@ -8,14 +8,30 @@
 #define MAX_CLIENT 1024
 #define MAX_BUF 1024
 
+//定义接入客户端数据结构
 typedef struct _CLIENT {
     int fd;
     struct sockaddr_in addr;
 }_CLIENT;
 
-static _CLIENT client[MAX_CLIENT]; //看看这个值多大 printf("%d\n", FD_SETSIZE);  1024
-
+//定义全局变量
+static _CLIENT _client[MAX_CLIENT]; //模块化全局变量_client
 char buf[MAX_BUF + 1];
+
+/**
+* 函数声明
+*/
+void client_init();
+int client_add(int connectfd, struct sockaddr_in addr);
+int client_getconfd(int i);
+void client_clearn(int i);
+int client_interface(int sockfd, int i);
+
+
+
+/**
+* 函数体
+*/
 
 /**
  初始化客户端结构
@@ -23,7 +39,7 @@ char buf[MAX_BUF + 1];
 void client_init() {
 	int i;
 	for(i = 0; i < MAX_CLIENT; i++) {
-        client[i].fd = -1;
+        _client[i].fd = -1;
     }
 }
 
@@ -34,11 +50,11 @@ int client_add(int connectfd, struct sockaddr_in addr) {
 	//找到客户端对象中可用的并赋值
 	int i;
     for(i = 0; i < MAX_CLIENT; i++) {
-        if(client[i].fd < 0) {
-            client[i].fd = connectfd;
-            client[i].addr = addr;
+        if(_client[i].fd < 0) {
+            _client[i].fd = connectfd;
+            _client[i].addr = addr;
             //打印客户端ip             
-            printf("有客户端接入了 IP:%s\n", inet_ntoa(client[i].addr.sin_addr));
+            printf("有客户端接入了 IP:%s\n", inet_ntoa(_client[i].addr.sin_addr));
             break;
         }
     }
@@ -56,14 +72,14 @@ int client_add(int connectfd, struct sockaddr_in addr) {
  获取客户端连接标示
 */
 int client_getconfd(int i) {
-	return client[i].fd;
+	return _client[i].fd;
 }
 
 /**
  清理客户端连接标示
 */
 void client_clearn(int i) {
-	client[i].fd = -1;
+	_client[i].fd = -1;
 }
 
 /**
@@ -73,7 +89,7 @@ int client_interface(int sockfd, int i) {
 	bzero(buf, MAX_BUF + 1);
 	int n;
     if((n = recv(sockfd, buf, MAX_BUF, 0)) > 0) {
-        //printf("第%d个客户端 IP:%s\n", i + 1, inet_ntoa(client[i].addr.sin_addr));
+        //printf("第%d个客户端 IP:%s\n", i + 1, inet_ntoa(_client[i].addr.sin_addr));
         //解析XML
         xml_parse(buf);
 
@@ -108,9 +124,9 @@ int client_interface(int sockfd, int i) {
             printf("CLIENT-%d-发送的数据:%s\n", sockfd, buf);
             int to;
             if(i == 0) {
-                to = client[1].fd;
+                to = _client[1].fd;
             }else if (i == 1) {
-                to = client[0].fd;
+                to = _client[0].fd;
             }   
             send(to, buf, strlen(buf), 0);                            
         }
