@@ -13,9 +13,9 @@
 typedef struct _XMLNODE {
     int n; //第几个节点，作为唯一值，初始化时置为-1
     int deep; //深度，0为根节点
-    int nextDeep; //下一个节点的深度
+    int parent; //父节点的值
     char name[10]; //名称
-    char content[MAX_CONTENT_LENG]; //内容
+    char text[MAX_CONTENT_LENG]; //内容
     char attr[256]; //属性
 }_XMLNODE;
 
@@ -54,13 +54,12 @@ void xmlnode_print(int n) {
             printf("%s\n", "超范围了");
             return;
         }
-        j = n;
-        k = n + 1;
+        j = k = n;
     }
-    for(i = j; i < k; i++) {
+    for(i = j; i <= k; i++) {
         printf("%s\n", _xmlnode[i].name);
         if(strlen(_xmlnode[i].attr)) printf("%s\n", _xmlnode[i].attr);
-        if(strlen(_xmlnode[i].content))printf("%s\n", _xmlnode[i].content);
+        if(strlen(_xmlnode[i].text))printf("%s\n", _xmlnode[i].text);
         printf("\n");
     }
 }
@@ -88,13 +87,13 @@ static void element_parse(xmlNode *aNode) {
     xmlNode *curNode = NULL;
     xmlChar *szKey, *szAttr;
     xmlAttrPtr attrPtr;
-    int count = 0;
+    int parent = 0, deep = 0;
     char key[256];
 
     for(curNode = aNode; curNode; curNode = curNode->next) {
         switch(curNode->type) {
             case XML_ELEMENT_NODE:
-                _n++;
+                _n++;parent++;
                 //节点名称
                 bzero(_xmlnode[_n].name, 10);
                 strncat(_xmlnode[_n].name, curNode->name, strlen(curNode->name));
@@ -117,12 +116,13 @@ static void element_parse(xmlNode *aNode) {
             case XML_TEXT_NODE:
                 //内容
                 szKey = xmlNodeGetContent(curNode);
-                bzero(_xmlnode[_n].content, MAX_CONTENT_LENG);
-                strncat(_xmlnode[_n].content, szKey, strlen(szKey));
+                bzero(_xmlnode[_n].text, MAX_CONTENT_LENG);
+                strncat(_xmlnode[_n].text, szKey, strlen(szKey));
                 xmlFree(szKey);
                 break;
-        }
-        
+        } 
+        int _p = _n - parent;
+        printf("%d\t%d\t%d\t%d\t%s\t\n", parent, _n, _p, 1,curNode->name);
         element_parse(curNode->children);
     }
 }
