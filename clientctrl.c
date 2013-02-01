@@ -92,7 +92,10 @@ int client_interface(int sockfd, int i) {
         //printf("第%d个客户端 IP:%s\n", i + 1, inet_ntoa(_client[i].addr.sin_addr));
         //解析XML
         xmlnode_init(); //初始化xml存储
-        xmlnode_parse(buf);
+        if(xmlnode_parse(buf) == -1) {
+            printf("xml非法\n");
+            return -1;
+        }
         xmlnode_print(-1);
 
         if(n == 120) {

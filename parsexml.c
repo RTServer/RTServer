@@ -21,7 +21,7 @@ typedef struct _XMLNODE {
 
 //定义全局变量
 static _XMLNODE _xmlnode[MAX_XMLNODE_LENG]; //模块化全局变量_xmlnode
-static _n = -1;
+static int _n = -1, _deep = -1;
 
 /**
 * 函数声明
@@ -38,7 +38,7 @@ static void element_parse(xmlNode *aNode);
 
 void xmlnode_init() {
     int i;
-    _n = -1;
+    _n = _deep = -1;
     for(i = 0; i < MAX_XMLNODE_LENG; i++) {
         _xmlnode[i].n = -1;
     }
@@ -57,9 +57,10 @@ void xmlnode_print(int n) {
         j = k = n;
     }
     for(i = j; i <= k; i++) {
-        printf("%s\n", _xmlnode[i].name);
-        if(strlen(_xmlnode[i].attr)) printf("%s\n", _xmlnode[i].attr);
-        if(strlen(_xmlnode[i].text))printf("%s\n", _xmlnode[i].text);
+        printf("name:%s\n", _xmlnode[i].name);
+        printf("n:%d deep:%d parent:%d\n", _xmlnode[i].n, _xmlnode[i].deep, _xmlnode[i].parent);
+        printf("attr:%s\n", _xmlnode[i].attr);
+        printf("text:%s\n", _xmlnode[i].text);
         printf("\n");
     }
 }
@@ -71,7 +72,7 @@ int xmlnode_parse(const char *xml) {
     LIBXML_TEST_VERSION
     doc = xmlParseMemory(xml, strlen(xml));
     if (NULL == doc) {
-        fprintf(stderr, "open file failed!\n");
+        fprintf(stderr, "xml invalid!\n");
         return -1;
     }
 
@@ -87,13 +88,15 @@ static void element_parse(xmlNode *aNode) {
     xmlNode *curNode = NULL;
     xmlChar *szKey, *szAttr;
     xmlAttrPtr attrPtr;
-    int parent = 0, deep = 0;
+    int oneTimeRecurNodeNum = 0; //一次递归节点数
+    static int _pd[MAX_XMLNODE_LENG];
     char key[256];
 
     for(curNode = aNode; curNode; curNode = curNode->next) {
         switch(curNode->type) {
             case XML_ELEMENT_NODE:
-                _n++;parent++;
+                _n++;
+                oneTimeRecurNodeNum++;
                 //节点名称
                 bzero(_xmlnode[_n].name, 10);
                 strncat(_xmlnode[_n].name, curNode->name, strlen(curNode->name));
@@ -120,9 +123,41 @@ static void element_parse(xmlNode *aNode) {
                 strncat(_xmlnode[_n].text, szKey, strlen(szKey));
                 xmlFree(szKey);
                 break;
-        } 
-        int _p = _n - parent;
-        printf("%d\t%d\t%d\t%d\t%s\t\n", parent, _n, _p, 1,curNode->name);
+        }
+        //设置深度
+        if(oneTimeRecurNodeNum == 1) { //oneTimeRecurNodeNum为1时深度加1
+            _deep++;
+        }else if(oneTimeRecurNodeNum > 1) { //oneTimeRecurNodeNum大于1时，深度等于对照表中保存的上一个深度
+            _deep = _pd[oneTimeRecurNodeNum - 1];
+        }
+        _pd[oneTimeRecurNodeNum] = _deep; //保存对照表中的oneTimeRecurNodeNum和当前深度的关系
+        _xmlnode[_n].deep = _deep; //为全局节点数组赋值深度
+
+        //设置父节点
+        if(_n == 0) {
+            _xmlnode[_n].parent = -1;
+        }else {
+            int _deepCur = _xmlnode[_n].deep, _deepPre = _xmlnode[_n - 1].deep;
+            if(_deepCur == _deepPre) { //当前深度和前一个深度一样，则当前父亲也和上一个一样
+                _xmlnode[_n].parent = _xmlnode[_n - 1].parent;
+            }else if(_deepCur > _deepPre) { //当前深度大于前一个深度，说明向内进了一层，则当前父亲就是上一个节点
+                _xmlnode[_n].parent = _n - 1;
+            }else { //当前深度小于前一个深度，说明在回退，需判断前一个节点到其父节点中和其相同深度的节点个数(_deepSame)
+                //则当前父节点=[当前节点值-(上一个节点深度-当前节点深度+_deepSame)].parent
+                int _deepSame = _n - 1 - _xmlnode[_n - 1].parent;
+                _xmlnode[_n].parent = _xmlnode[_n - (_deepPre - _deepCur + _deepSame)].parent;
+            }
+        }
+
+        //设置节点标示
+        _xmlnode[_n].n = _n;
+
+        /**
+        if(oneTimeRecurNodeNum) { //oneTimeRecurNodeNum为0即为text(内容)
+            if(_n == 0 && oneTimeRecurNodeNum == 1) printf("_oTRNN\t_n\tdeep\tparent\tcodename\n");
+            printf("%d\t%d\t%d\t%d\t%s\t\n", oneTimeRecurNodeNum, _n, _deep, _xmlnode[_n].parent, curNode->name);
+        }*/
+        
         element_parse(curNode->children);
     }
 }
