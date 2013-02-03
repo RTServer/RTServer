@@ -98,6 +98,29 @@ int client_interface(int sockfd, int i) {
         }
         xmlnode_print(-1);
 
+        //根据节点名称获取内容
+        int m, j;
+        char **str = xmlnode_gettext_byname("method", &m);
+        printf("%d\n", m);
+        for(j = 0; j < m; j++) {
+            printf("%s\n", str[j]);
+            free(str[j]);
+        }
+        free(str);
+        str = NULL;
+
+        //根据节点名称和属性获取属性值
+        char *value;
+        value = xmlnode_getattrval_byname("c", "node");
+        if(value != NULL) printf("c-node:%s\n", value);
+        value = xmlnode_getattrval_byname("c", "ver1");
+        if(value != NULL) printf("c-ver1:%s\n", value);
+        value = xmlnode_getattrval_byname("c", "hash");
+        if(value != NULL) printf("c-hash:%s\n", value);
+        free(value);
+        value = NULL;
+        
+
         if(n == 120) {
             //1.接收客户端消息
             printf("CLIENT-%d-接收数据:%s\n", sockfd, buf);
