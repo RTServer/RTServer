@@ -100,23 +100,23 @@ int client_interface(int sockfd, int i) {
 
         //根据节点名称获取内容
         int m, j;
-        char **str = xmlnode_gettext_byname("method", &m);
+        wchar_t **str = xmlnode_gettext_byname(L"method", &m);
         printf("%d\n", m);
         for(j = 0; j < m; j++) {
-            printf("%s\n", str[j]);
+            printf("%ls\n", str[j]);
             free(str[j]);
         }
         free(str);
         str = NULL;
 
         //根据节点名称和属性获取属性值
-        char *value;
-        value = xmlnode_getattrval_byname("c", "node");
-        if(value != NULL) printf("c-node:%s\n", value);
-        value = xmlnode_getattrval_byname("c", "ver1");
-        if(value != NULL) printf("c-ver1:%s\n", value);
-        value = xmlnode_getattrval_byname("c", "hash");
-        if(value != NULL) printf("c-hash:%s\n", value);
+        wchar_t *value;
+        value = xmlnode_getattrval_byname(L"c", L"node");
+        if(value != NULL) printf("c-node:%ls\n", value);
+        value = xmlnode_getattrval_byname(L"c", L"ver1");
+        if(value != NULL) printf("c-ver1:%ls\n", value);
+        value = xmlnode_getattrval_byname(L"c", L"hash");
+        if(value != NULL) printf("c-hash:%ls\n", value);
         free(value);
         value = NULL;
         

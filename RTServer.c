@@ -32,12 +32,20 @@ TCP6: inuse 3UDP6: inuse 0RAW6: inuse 0 FRAG6: inuse 0 memory 0
 #include <errno.h>
 #include <string.h>
 #include <netinet/in.h>
+#include <locale.h>
 
 #include "clientctrl.h"
 
 #define MAX_LENGTH 1024
 
 int main(int argc, char** argv) {
+    //设置为宽字符处理
+    if (!setlocale(LC_CTYPE, "en_US.UTF-8")) {
+        fprintf(stderr, "Can't set the specified locale! "
+            "Check LANG, LC_CTYPE, LC_ALL.\n");
+        exit(1);
+    }
+
     int i, maxi = -1;
     int nready;
     int slisten, sockfd, maxfd = -1, connectfd;

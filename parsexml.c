@@ -6,13 +6,18 @@
 #include <libxml/parser.h>
 #include <libxml/xmlmemory.h>
 
-#define MAX_TEXT_LENG 1024
-#define MAX_XMLNODE_LENG 100
+#define MAX_XMLTEXT_LENG 1024 //内容最大长度
+#define MAX_XMLNODE_NUM 128 //最大节点数
+#define MAX_XMLATTR_KEY_LENG 32 //最大节点属性名长度
+#define MAX_XMLATTR_VALUE_LENG 256 //最大节点属性值长度
+#define MAX_XMLNAME_LENG 32 //最大节点名称长度
+#define MAX_XMLSAME_NUM 8 //可能相同节点名称的个数
+#define MAX_XMLATTR_NUM 16 //属性最大个数
 
 //定义属性数据结构
 typedef struct _XMLATTR {
-    char key[32]; //属性字段
-    char value[256]; //属性值
+    wchar_t key[MAX_XMLATTR_KEY_LENG + 1]; //属性字段
+    wchar_t value[MAX_XMLATTR_VALUE_LENG + 1]; //属性值
     struct _XMLATTR *next; //下一个属性指针
 }_XMLATTR;
 
@@ -21,14 +26,14 @@ typedef struct _XMLNODE {
     int n; //第几个节点，作为唯一值，初始化时置为-1
     int deep; //深度，0为根节点
     int parent; //父节点的值
-    char name[32]; //名称
-    char text[MAX_TEXT_LENG]; //内容
+    wchar_t name[MAX_XMLNAME_LENG + 1]; //名称
+    wchar_t text[MAX_XMLTEXT_LENG + 1]; //内容
     struct _XMLATTR *attr;
 }_XMLNODE;
 
 
 //定义全局变量
-static _XMLNODE _xmlnode[MAX_XMLNODE_LENG]; //模块化全局变量_xmlnode
+static _XMLNODE _xmlnode[MAX_XMLNODE_NUM]; //模块化全局变量_xmlnode
 static int _n = -1, _deep = -1;
 
 /**
@@ -37,8 +42,8 @@ static int _n = -1, _deep = -1;
 void xmlnode_init();
 void xmlnode_print(int n);
 int xmlnode_parse(const char *xml);
-char **xmlnode_gettext_byname(const char *name, int *n);
-char *xmlnode_getattrval_byname(const char *name, const char *attr);
+wchar_t **xmlnode_gettext_byname(const wchar_t *name, int *n);
+wchar_t *xmlnode_getattrval_byname(const wchar_t *name, const wchar_t *attr);
 static void element_parse(xmlNode *aNode);
 
 
@@ -52,7 +57,7 @@ static void element_parse(xmlNode *aNode);
 void xmlnode_init() {
     int i;
     _n = _deep = -1;
-    for(i = 0; i < MAX_XMLNODE_LENG; i++) {
+    for(i = 0; i < MAX_XMLNODE_NUM; i++) {
         _xmlnode[i].n = -1;
         _xmlnode[i].attr = NULL;
     }
@@ -75,34 +80,34 @@ void xmlnode_print(int n) {
         j = k = n;
     }
     for(i = j; i <= k; i++) {
-        printf("name:%s\n", _xmlnode[i].name);
+        printf("name:%ls\n", _xmlnode[i].name);
         printf("n:%d deep:%d parent:%d\n", _xmlnode[i].n, _xmlnode[i].deep, _xmlnode[i].parent);
         printf("attr:");
         _XMLATTR *_xa = _xmlnode[i].attr, __xa;
         while(_xa != NULL) {
             __xa = *_xa;
-            printf("%s->%s\t", __xa.key, __xa.value);
+            printf("%ls->%ls\t", __xa.key, __xa.value);
             _xa = __xa.next;
         }
         printf("\n");
-        printf("text:%s\n", _xmlnode[i].text);
+        printf("text:%ls\n", _xmlnode[i].text);
         printf("\n");
     }
 }
 
 /**
  * 根据节点名称获取内容
- * @param const char *name
+ * @param const wchar_t *name
  * @param int n
  */
-char **xmlnode_gettext_byname(const char *name, int *n) {
+wchar_t **xmlnode_gettext_byname(const wchar_t *name, int *n) {
     int i, j = 0;
-    //char str[10][MAX_TEXT_LENG]; 
-    char **str = (char **)malloc(10 * sizeof(char *)); //暂时认为相同节点个数不会超过10
-    for(i = 0; i < MAX_XMLNODE_LENG && _xmlnode[i].n != -1; i++) {
-        if(!strcasecmp(name, _xmlnode[i].name)) {
-            str[j] = (char *)malloc(MAX_XMLNODE_LENG * sizeof(char));
-            strcpy(str[j], _xmlnode[i].text);
+    wchar_t **str = (wchar_t **)malloc(MAX_XMLSAME_NUM * sizeof(wchar_t *)); //暂时认为相同节点个数不会超过8
+    for(i = 0; i < MAX_XMLNODE_NUM && _xmlnode[i].n != -1; i++) {
+        if(!wcscmp(name, _xmlnode[i].name)) {
+            if(j == MAX_XMLSAME_NUM) break;
+            str[j] = (wchar_t *)malloc((MAX_XMLTEXT_LENG + 1) * sizeof(wchar_t));
+            wcsncpy(str[j], _xmlnode[i].text, MAX_XMLTEXT_LENG);
             j++;
         }
     }
@@ -112,20 +117,20 @@ char **xmlnode_gettext_byname(const char *name, int *n) {
 
 /**
  * 根据节点名称和属性获取属性值
- * @param const char *name
- * @param const char *attr
+ * @param const wchar_t *name
+ * @param const wchar_t *attr
  */
-char *xmlnode_getattrval_byname(const char *name, const char *attr) {
+wchar_t *xmlnode_getattrval_byname(const wchar_t *name, const wchar_t *attr) {
     int i;
-    char *value = NULL;
-    for(i = 0; i < MAX_XMLNODE_LENG && _xmlnode[i].n != -1; i++) {
-        if(!strcasecmp(name, _xmlnode[i].name)) {
+    wchar_t *value = NULL;
+    for(i = 0; i < MAX_XMLNODE_NUM && _xmlnode[i].n != -1; i++) {
+        if(!wcscmp(name, _xmlnode[i].name)) {
             _XMLATTR *_xa = _xmlnode[i].attr, __xa;
             while(_xa != NULL) {
                 __xa = *_xa;
-                if(!strcasecmp(attr, __xa.key)) {
-                    value = (char *)malloc(256 * sizeof(char));
-                    strcpy(value, __xa.value);
+                if(!wcscmp(attr, __xa.key)) {
+                    value = (wchar_t *)malloc((MAX_XMLATTR_VALUE_LENG + 1) * sizeof(wchar_t));
+                    wcsncpy(value, __xa.value, MAX_XMLATTR_VALUE_LENG);
                     break;
                 }
                 _xa = __xa.next;
@@ -164,7 +169,7 @@ static void element_parse(xmlNode *aNode) {
     xmlChar *szKey, *szAttr;
     xmlAttrPtr attrPtr;
     int oneTimeRecurNodeNum = 0; //一次递归节点数
-    static int _pd[MAX_XMLNODE_LENG];
+    static int _pd[MAX_XMLNODE_NUM];
 
     for(curNode = aNode; curNode; curNode = curNode->next) {
         switch(curNode->type) {
@@ -172,17 +177,19 @@ static void element_parse(xmlNode *aNode) {
                 _n++;
                 oneTimeRecurNodeNum++;
                 //节点名称
-                bzero(_xmlnode[_n].name, 32);
-                strncat(_xmlnode[_n].name, curNode->name, strlen(curNode->name));
+                mbstowcs(_xmlnode[_n].name, curNode->name, strlen(curNode->name));
+                //wcsncpy(_xmlnode[_n].name, curNode->name, sizeof(_xmlnode[_n].name) - 1);
 
                 //属性
                 attrPtr = curNode->properties;
-                _XMLATTR _xmlattr[16], *next = NULL; //认为节点数不超过16个
+                _XMLATTR _xmlattr[MAX_XMLATTR_NUM], *next = NULL; //认为节点数不超过16个
                 int i = 0;
                 while(attrPtr != NULL) {
                     szAttr = xmlGetProp(curNode, BAD_CAST attrPtr->name);
-                    strcpy(_xmlattr[i].key, attrPtr->name);
-                    strcpy(_xmlattr[i].value, szAttr);
+                    mbstowcs(_xmlattr[i].key, attrPtr->name, strlen(attrPtr->name));
+                    mbstowcs(_xmlattr[i].value, szAttr, strlen(szAttr));
+                    //wcsncpy(_xmlattr[i].key, attrPtr->name, sizeof(_xmlattr[i].key) - 1);
+                    //wcsncpy(_xmlattr[i].value, szAttr, sizeof(_xmlattr[i].value) - 1);
                     if(i == 0) _xmlattr[i].next = _xmlattr;
                     else _xmlattr[i - 1].next = &_xmlattr[i]; //上一个next指向当前
                     i++;
@@ -190,14 +197,16 @@ static void element_parse(xmlNode *aNode) {
                     xmlFree(szAttr);
                     attrPtr = attrPtr->next;
                 }
-                if(i == 1) _xmlattr[0].next = NULL; //如果一个属性，需要将next指向NULL
-                if(i) _xmlnode[_n].attr = _xmlattr;
+                if(i) {
+                    if(i == 1) _xmlattr[0].next = NULL; //如果一个属性，需要将next指向NULL
+                    _xmlnode[_n].attr = _xmlattr;
+                }
                 break;
             case XML_TEXT_NODE:
                 //内容
                 szKey = xmlNodeGetContent(curNode);
-                bzero(_xmlnode[_n].text, MAX_TEXT_LENG);
-                strncat(_xmlnode[_n].text, szKey, strlen(szKey));
+                mbstowcs(_xmlnode[_n].text, szKey, strlen(szKey));
+                //wcsncpy(_xmlnode[_n].text, szKey, sizeof(_xmlnode[_n].text) - 1);
                 xmlFree(szKey);
                 break;
         }
