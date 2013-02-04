@@ -59,6 +59,9 @@ void xmlnode_init() {
     _n = _deep = -1;
     for(i = 0; i < MAX_XMLNODE_NUM; i++) {
         _xmlnode[i].n = -1;
+        wmemset(_xmlnode[i].name, 0, sizeof(_xmlnode[i].name)/sizeof(wchar_t));
+        wmemset(_xmlnode[i].text, 0, sizeof(_xmlnode[i].text)/sizeof(wchar_t));
+        free(_xmlnode[i].attr);
         _xmlnode[i].attr = NULL;
     }
 }
@@ -177,19 +180,17 @@ static void element_parse(xmlNode *aNode) {
                 _n++;
                 oneTimeRecurNodeNum++;
                 //节点名称
-                mbstowcs(_xmlnode[_n].name, curNode->name, strlen(curNode->name));
-                //wcsncpy(_xmlnode[_n].name, curNode->name, sizeof(_xmlnode[_n].name) - 1);
+                mbstowcs(_xmlnode[_n].name, curNode->name, sizeof(_xmlnode[_n].name) - 1);
 
                 //属性
                 attrPtr = curNode->properties;
-                _XMLATTR _xmlattr[MAX_XMLATTR_NUM], *next = NULL; //认为节点数不超过16个
+                //_XMLATTR _xmlattr[MAX_XMLATTR_NUM]; //认为节点数不超过16个 (这种方式内存地址会重复)
+                _XMLATTR *_xmlattr = (_XMLATTR *)malloc(MAX_XMLATTR_NUM * sizeof(_XMLATTR)); //需要申请内存
                 int i = 0;
                 while(attrPtr != NULL) {
                     szAttr = xmlGetProp(curNode, BAD_CAST attrPtr->name);
-                    mbstowcs(_xmlattr[i].key, attrPtr->name, strlen(attrPtr->name));
-                    mbstowcs(_xmlattr[i].value, szAttr, strlen(szAttr));
-                    //wcsncpy(_xmlattr[i].key, attrPtr->name, sizeof(_xmlattr[i].key) - 1);
-                    //wcsncpy(_xmlattr[i].value, szAttr, sizeof(_xmlattr[i].value) - 1);
+                    mbstowcs(_xmlattr[i].key, attrPtr->name, sizeof(_xmlattr[i].key) - 1);
+                    mbstowcs(_xmlattr[i].value, szAttr, sizeof(_xmlattr[i].value) - 1);
                     if(i == 0) _xmlattr[i].next = _xmlattr;
                     else _xmlattr[i - 1].next = &_xmlattr[i]; //上一个next指向当前
                     i++;
@@ -205,8 +206,7 @@ static void element_parse(xmlNode *aNode) {
             case XML_TEXT_NODE:
                 //内容
                 szKey = xmlNodeGetContent(curNode);
-                mbstowcs(_xmlnode[_n].text, szKey, strlen(szKey));
-                //wcsncpy(_xmlnode[_n].text, szKey, sizeof(_xmlnode[_n].text) - 1);
+                mbstowcs(_xmlnode[_n].text, szKey, sizeof(_xmlnode[_n].text) - 1);
                 xmlFree(szKey);
                 break;
         }
