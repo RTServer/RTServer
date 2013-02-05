@@ -180,7 +180,7 @@ static void element_parse(xmlNode *aNode) {
                 _n++;
                 oneTimeRecurNodeNum++;
                 //节点名称
-                mbstowcs(_xmlnode[_n].name, curNode->name, sizeof(_xmlnode[_n].name) - 1);
+                mbstowcs(_xmlnode[_n].name, curNode->name, sizeof(_xmlnode[_n].name)/sizeof(wchar_t) - 1);
 
                 //属性
                 attrPtr = curNode->properties;
@@ -189,8 +189,8 @@ static void element_parse(xmlNode *aNode) {
                 int i = 0;
                 while(attrPtr != NULL) {
                     szAttr = xmlGetProp(curNode, BAD_CAST attrPtr->name);
-                    mbstowcs(_xmlattr[i].key, attrPtr->name, sizeof(_xmlattr[i].key) - 1);
-                    mbstowcs(_xmlattr[i].value, szAttr, sizeof(_xmlattr[i].value) - 1);
+                    mbstowcs(_xmlattr[i].key, attrPtr->name, sizeof(_xmlattr[i].key)/sizeof(wchar_t) - 1);
+                    mbstowcs(_xmlattr[i].value, szAttr, sizeof(_xmlattr[i].value)/sizeof(wchar_t) - 1);
                     if(i == 0) _xmlattr[i].next = _xmlattr;
                     else _xmlattr[i - 1].next = &_xmlattr[i]; //上一个next指向当前
                     i++;
@@ -206,7 +206,7 @@ static void element_parse(xmlNode *aNode) {
             case XML_TEXT_NODE:
                 //内容
                 szKey = xmlNodeGetContent(curNode);
-                mbstowcs(_xmlnode[_n].text, szKey, sizeof(_xmlnode[_n].text) - 1);
+                mbstowcs(_xmlnode[_n].text, szKey, sizeof(_xmlnode[_n].text)/sizeof(wchar_t) - 1);
                 xmlFree(szKey);
                 break;
         }
