@@ -6,7 +6,7 @@
 #include "parsexml.h"
 
 #define MAX_CLIENT 1024
-#define MAX_BUF 1024
+#define MAX_BUF 10240
 
 //定义接入客户端数据结构
 typedef struct _CLIENT {
@@ -24,18 +24,17 @@ char buf[MAX_BUF + 1];
 void client_init();
 int client_add(int connectfd, struct sockaddr_in addr);
 int client_getconfd(int i);
-void client_clearn(int i);
+void client_clean(int i);
 int client_interface(int sockfd, int i);
 
 
+/**
+ * 函数体
+ */
 
 /**
-* 函数体
-*/
-
-/**
- 初始化客户端结构
-*/
+ * 初始化客户端结构
+ */
 void client_init() {
 	int i;
 	for(i = 0; i < MAX_CLIENT; i++) {
@@ -44,14 +43,17 @@ void client_init() {
 }
 
 /**
- 添加客户端
-*/
+ * 添加客户端
+ * @param  connectfd [description]
+ * @param  addr      [description]
+ * @return           [description]
+ */
 int client_add(int connectfd, struct sockaddr_in addr) {
 	//找到客户端对象中可用的并赋值
 	int i;
     for(i = 0; i < MAX_CLIENT; i++) {
         if(_client[i].fd < 0) {
-            _client[i].fd = connectfd;
+            _client[i].fd   = connectfd;
             _client[i].addr = addr;
             //打印客户端ip             
             printf("有客户端接入了 IP:%s\n", inet_ntoa(_client[i].addr.sin_addr));
@@ -69,28 +71,36 @@ int client_add(int connectfd, struct sockaddr_in addr) {
 }
 
 /**
- 获取客户端连接标示
-*/
+ * 获取客户端连接标示
+ * @param  i [description]
+ * @return   [description]
+ */
 int client_getconfd(int i) {
 	return _client[i].fd;
 }
 
 /**
- 清理客户端连接标示
-*/
-void client_clearn(int i) {
+ * 清理客户端连接标示
+ * @param i [description]
+ */
+void client_clean(int i) {
 	_client[i].fd = -1;
 }
 
 /**
- 和客户交互
-*/
+ * 和客户交互
+ * @param  sockfd [description]
+ * @param  i      [description]
+ * @return        [description]
+ */
 int client_interface(int sockfd, int i) {
 	bzero(buf, MAX_BUF + 1);
 	int n;
     if((n = recv(sockfd, buf, MAX_BUF, 0)) > 0) {
         //printf("第%d个客户端 IP:%s\n", i + 1, inet_ntoa(_client[i].addr.sin_addr));
         //解析XML
+        printf("%s\n", buf);
+
         xmlnode_init(); //初始化xml存储
         if(xmlnode_parse(buf) == -1) {
             printf("xml非法\n");
@@ -111,15 +121,17 @@ int client_interface(int sockfd, int i) {
 
         //根据节点名称和属性获取属性值
         wchar_t *value;
-        value = xmlnode_getattrval_byname(L"c", L"node");
-        if(value != NULL) printf("c-node:%ls\n", value);
-        value = xmlnode_getattrval_byname(L"c", L"ver1");
-        if(value != NULL) printf("c-ver1:%ls\n", value);
-        value = xmlnode_getattrval_byname(L"c", L"hash");
-        if(value != NULL) printf("c-hash:%ls\n", value);
+        value = xmlnode_getattrval_byname(L"stream", L"id");
+        if(value != NULL) printf("stream-id:%ls\n", value);
+
+        bzero(buf, MAX_BUF + 1);
+        sprintf(buf, "%ls", value);
+        send(sockfd, buf, strlen(buf), 0);
+        
         free(value);
         value = NULL;
         
+        return 1;
 
         if(n == 120) {
             //1.接收客户端消息

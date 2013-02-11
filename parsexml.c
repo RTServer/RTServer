@@ -191,7 +191,9 @@ static void element_parse(xmlNode *aNode) {
                 int i = 0;
                 while(attrPtr != NULL) {
                     szAttr = xmlGetProp(curNode, BAD_CAST attrPtr->name);
+                    wmemset(_xmlattr[i].key, 0, MAX_XMLATTR_KEY_LENG + 1);
                     mbstowcs(_xmlattr[i].key, attrPtr->name, MAX_XMLATTR_KEY_LENG);
+                    wmemset(_xmlattr[i].value, 0, MAX_XMLATTR_VALUE_LENG + 1);
                     mbstowcs(_xmlattr[i].value, szAttr, MAX_XMLATTR_VALUE_LENG);
                     if(i == 0) _xmlattr[i].next = _xmlattr;
                     else _xmlattr[i - 1].next = &_xmlattr[i]; //上一个next指向当前
@@ -201,7 +203,7 @@ static void element_parse(xmlNode *aNode) {
                     attrPtr = attrPtr->next;
                 }
                 if(i) {
-                    if(i == 1) _xmlattr[0].next = NULL; //如果一个属性，需要将next指向NULL
+                    _xmlattr[i - 1].next = NULL; //如果要将next指向NULL
                     _xmlnode[_n].attr = _xmlattr;
                 }
                 break;

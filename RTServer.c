@@ -36,8 +36,14 @@ TCP6: inuse 3UDP6: inuse 0RAW6: inuse 0 FRAG6: inuse 0 memory 0
 
 #include "clientctrl.h"
 
-#define MAX_LENGTH 1024
+#define MAX_LENGTH 1024 //最大监听数
 
+/**
+ * [main description]
+ * @param  argc [description]
+ * @param  argv [description]
+ * @return      [description]
+ */
 int main(int argc, char** argv) {
     //设置为宽字符处理
     if (!setlocale(LC_CTYPE, "en_US.UTF-8")) {
@@ -46,9 +52,8 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    int i, maxi = -1;
-    int nready;
-    int slisten, sockfd, maxfd = -1, connectfd;
+    int i, nready, maxi                   = -1;
+    int slisten, sockfd, connectfd, maxfd = -1;
     
     unsigned int myport, lisnum; 
 
@@ -64,21 +69,15 @@ int main(int argc, char** argv) {
     else
         myport = 5222;
 
-    //第二个参数：最大监听数
-    if(argv[2])
-        lisnum = atoi(argv[2]);
-    else 
-        lisnum = MAX_LENGTH;
-
-    //创建用于internet的流协议(TCP)socket,用server_socket代表服务器socket
+    //创建用于internet的流协议(TCP)socket,用slisten代表服务器socket
     if((slisten = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         perror("socket");
         exit(1);
     }
 
     bzero(&my_addr, sizeof(my_addr));
-    my_addr.sin_family = AF_INET;
-    my_addr.sin_port = htons(myport);
+    my_addr.sin_family      = AF_INET;
+    my_addr.sin_port        = htons(myport);
     my_addr.sin_addr.s_addr = INADDR_ANY;
 
     if(bind(slisten, (struct sockaddr *)&my_addr, sizeof(my_addr)) == -1) {
@@ -86,8 +85,7 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    //listen(sockfd, LENGTH_OF_LISTEN_QUEUE);
-    if(listen(slisten, lisnum) == -1) {
+    if(listen(slisten, MAX_LENGTH) == -1) {
         perror("listen");
         exit(1);
     }
@@ -99,11 +97,11 @@ int main(int argc, char** argv) {
     FD_SET(slisten, &allset);  
     maxfd = slisten;
     
-    printf("等待连接和数据...\n");
+    printf("Socket:%d-等待连接和数据...\n", slisten);
     while(1) {
         rset = allset;            
 
-        tv.tv_sec = 1;
+        tv.tv_sec  = 1;
         tv.tv_usec = 0;
         /**
         Select在Socket编程中还是比较重要的，可是对于初学Socket的人来说都不太爱用Select写程序，
@@ -143,14 +141,14 @@ int main(int argc, char** argv) {
                     maxi = i;
             }else {
                 for(i = 0; i <= maxi; i++) {   
-                    if((sockfd = client_getconfd(i)) < 0)
+                    if((sockfd = client_getconfd(i)) == -1)
                         continue;
                     if(FD_ISSET(sockfd, &rset)) { //接收客户端信息
                         if (!client_interface(sockfd, i)) {
                             printf("客户端退出了\n");
                             close(sockfd);
                             FD_CLR(sockfd, &allset);
-                            client_clearn(i);
+                            client_clean(i);
                         }
                     }
                 }

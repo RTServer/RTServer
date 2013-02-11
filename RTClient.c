@@ -13,17 +13,20 @@ S:<proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <sys/socket.h>
 #include <resolv.h>
 #include <stdlib.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <sys/time.h>
-#include <sys/types.h>
 
 #define MAXBUF 1024
 
+/**
+ * [main description]
+ * @param  argc [description]
+ * @param  argv [description]
+ * @return      [description]
+ */
 int main(int argc, char **argv) {
     int sockfd, len;
     struct sockaddr_in dest;
@@ -44,7 +47,7 @@ int main(int argc, char **argv) {
 
     bzero(&dest, sizeof(dest));
     dest.sin_family = AF_INET;
-    dest.sin_port = htons(atoi(argv[2]));
+    dest.sin_port   = htons(atoi(argv[2]));
     if(inet_aton(argv[1], (struct in_addr *)&dest.sin_addr.s_addr) == 0) {
         perror(argv[1]);
         exit(errno);
@@ -55,10 +58,10 @@ int main(int argc, char **argv) {
         exit(errno);
     }
 
-    printf("等待连接和数据...\n");        
+    printf("等待连接和数据...\n");
     while (1) {
 
-        FD_ZERO(&rfds);           
+        FD_ZERO(&rfds);
         FD_SET(0, &rfds);
         maxfd = 0;
 
@@ -66,7 +69,7 @@ int main(int argc, char **argv) {
         if(sockfd > maxfd)
             maxfd = sockfd;
 
-        tv.tv_sec = 1;
+        tv.tv_sec  = 1;
         tv.tv_usec = 0;
 
         retval = select(maxfd + 1, &rfds, NULL, NULL, &tv);
@@ -75,7 +78,7 @@ int main(int argc, char **argv) {
             printf("select error! %s", strerror(errno));              
             break;
         } else if (retval == 0) {
-             //printf("no msg,no key, and continue to wait……\n"); 
+             //printf("no msg,no key, and continue to wait……\n");
             continue;
         } else {
             if(FD_ISSET(0, &rfds)) {                
