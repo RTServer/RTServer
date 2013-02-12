@@ -57,12 +57,23 @@ void *talk_to_server(void *arg) {
         //exit(errno);
     }
 
-    printf("等待连接和数据...\n");   
+    printf("等待连接和数据...\n");
+
+    //向服务器发送一次数据，触发下面的接收事件
+    bzero(buf, MAXBUF + 1);
+    sprintf(buf, "<?xml version='1.0'?><stream:stream xmlns:stream='http://etherx.jabber.org/streams' id='%d' thread='%d' from='jabbercn.org' version='1.0' xml:lang='en'><stream:features><starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/><mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'><mechanism>PLAIN</mechanism></mechanisms><c xmlns='http://jabber.org/protocol/caps' hash='sha-1' node='http://www.process-one.net/en/ejabberd/' ver='k87lIPU+P82FgFI2M+F2/LglysI='/><register xmlns='http://jabber.org/features/iq-register'/></stream:features></stream:stream>", sockfd, info->n);
+    len = send(sockfd, buf, strlen(buf), 0);
+    if(len > 0)
+        printf("%d-发送成功\n", sockfd);
+    else {
+        printf("%d-发送失败\n", sockfd);
+        close(sockfd);
+        return;
+    }
     while (1) {
         //printf("okok%d\n", ++i);
 
-        FD_ZERO(&rfds);           
-        FD_SET(0, &rfds);
+        FD_ZERO(&rfds);
         maxfd = 0;
 
         FD_SET(sockfd, &rfds);
@@ -74,32 +85,33 @@ void *talk_to_server(void *arg) {
 
         retval = select(maxfd + 1, &rfds, NULL, NULL, &tv);
 
-        //printf("%d---%d----%d\n", retval, maxfd, sockfd); 
+        //printf("%d---%d\n", retval, sockfd);
 
         if (retval == -1) {
             printf("select error! %s", strerror(errno));              
             break;
         } else if (retval == 0) {
-            bzero(buf, MAXBUF + 1);
-            sprintf(buf, "<?xml version='1.0'?><stream:stream xmlns:stream='http://etherx.jabber.org/streams' id='%d' from='jabbercn.org' version='1.0' xml:lang='en'><stream:features><starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/><mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'><mechanism>PLAIN</mechanism></mechanisms><c xmlns='http://jabber.org/protocol/caps' hash='sha-1' node='http://www.process-one.net/en/ejabberd/' ver='k87lIPU+P82FgFI2M+F2/LglysI='/><register xmlns='http://jabber.org/features/iq-register'/></stream:features></stream:stream>", info->n);
-            len = send(sockfd, buf, strlen(buf), 0);
-            if(len > 0)
-                printf("%d-发送成功\n", sockfd);
-            else {
-                printf("%d-发送失败\n", sockfd);
-                break;
-            }
-            //printf("no msg,no key, and continue to wait……\n"); 
+            //printf("no msg,no key, and continue to wait……\n");
             continue;
         } else {
-            if(FD_ISSET(0, &rfds)) {
-                
-            }else if (FD_ISSET(sockfd, &rfds)) { 
+            if (FD_ISSET(sockfd, &rfds)) { 
                 bzero(buf, MAXBUF + 1);
                 len = recv(sockfd, buf, MAXBUF, 0);
-                if(len > 0)
+                if(len > 0) {
                     printf("%d-接收数据:%s\n", sockfd, buf);
-                else {
+
+                    //接收到数据就再发，sleep 1秒
+                    sleep(1);
+                    bzero(buf, MAXBUF + 1);
+                    sprintf(buf, "<?xml version='1.0'?><stream:stream xmlns:stream='http://etherx.jabber.org/streams' id='%d' thread='%d' from='jabbercn.org' version='1.0' xml:lang='en'><stream:features><starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/><mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'><mechanism>PLAIN</mechanism></mechanisms><c xmlns='http://jabber.org/protocol/caps' hash='sha-1' node='http://www.process-one.net/en/ejabberd/' ver='k87lIPU+P82FgFI2M+F2/LglysI='/><register xmlns='http://jabber.org/features/iq-register'/></stream:features></stream:stream>", sockfd, info->n);
+                    len = send(sockfd, buf, strlen(buf), 0);
+                    if(len > 0)
+                        printf("%d-发送成功\n", sockfd);
+                    else {
+                        printf("%d-发送失败\n", sockfd);
+                        break;
+                    }
+                }else {
                     if(len < 0) 
                         printf("%d-接收失败 错误号:%d，错误信息: '%s'\n", sockfd, errno, strerror(errno));
                     else
