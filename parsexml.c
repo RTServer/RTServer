@@ -108,15 +108,18 @@ void xmlnode_print(int n) {
 wchar_t **xmlnode_gettext_byname(const wchar_t *name, int *n) {
     int i, j = 0;
     wchar_t **str = (wchar_t **)malloc(MAX_XMLSAME_NUM * sizeof(wchar_t *)); //暂时认为相同节点个数不会超过8
-    for(i = 0; i < MAX_XMLNODE_NUM && _xmlnode[i].n != -1; i++) {
-        if(!wcscmp(name, _xmlnode[i].name)) {
-            if(j == MAX_XMLSAME_NUM) break;
-            str[j] = (wchar_t *)malloc((MAX_XMLTEXT_LENG + 1) * sizeof(wchar_t));
-            wcsncpy(str[j], _xmlnode[i].text, MAX_XMLTEXT_LENG);
-            j++;
+    if(str != NULL) {
+        for(i = 0; i < MAX_XMLNODE_NUM && _xmlnode[i].n != -1; i++) {
+            if(!wcscmp(name, _xmlnode[i].name)) {
+                if(j == MAX_XMLSAME_NUM) break;
+                str[j] = (wchar_t *)malloc((MAX_XMLTEXT_LENG + 1) * sizeof(wchar_t));
+                if(str[j] != NULL)
+                    wcsncpy(str[j], _xmlnode[i].text, MAX_XMLTEXT_LENG);
+                j++;
+            }
         }
+        *n = j;
     }
-    *n = j;
     return str;
 }
 
@@ -135,7 +138,8 @@ wchar_t *xmlnode_getattrval_byname(const wchar_t *name, const wchar_t *attr) {
                 __xa = *_xa;
                 if(!wcscmp(attr, __xa.key)) {
                     value = (wchar_t *)malloc((MAX_XMLATTR_VALUE_LENG + 1) * sizeof(wchar_t));
-                    wcsncpy(value, __xa.value, MAX_XMLATTR_VALUE_LENG);
+                    if(value != NULL)
+                        wcsncpy(value, __xa.value, MAX_XMLATTR_VALUE_LENG);
                     break;
                 }
                 _xa = __xa.next;
