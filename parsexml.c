@@ -42,6 +42,7 @@ static int _n = -1, _deep = -1;
 void xmlnode_init();
 void xmlnode_print(int n);
 int xmlnode_parse(const char *xml);
+void xmlnode_free();
 wchar_t **xmlnode_gettext_byname(const wchar_t *name, int *n);
 wchar_t *xmlnode_getattrval_byname(const wchar_t *name, const wchar_t *attr);
 static void element_parse(xmlNode *aNode);
@@ -186,25 +187,29 @@ static void element_parse(xmlNode *aNode) {
 
                 //属性
                 attrPtr = curNode->properties;
-                //_XMLATTR _xmlattr[MAX_XMLATTR_NUM]; //认为节点数不超过16个 (这种方式内存地址会重复)
-                _XMLATTR *_xmlattr = (_XMLATTR *)malloc(MAX_XMLATTR_NUM * sizeof(_XMLATTR)); //需要申请内存
-                int i = 0;
-                while(attrPtr != NULL) {
-                    szAttr = xmlGetProp(curNode, BAD_CAST attrPtr->name);
-                    wmemset(_xmlattr[i].key, 0, MAX_XMLATTR_KEY_LENG + 1);
-                    mbstowcs(_xmlattr[i].key, attrPtr->name, MAX_XMLATTR_KEY_LENG);
-                    wmemset(_xmlattr[i].value, 0, MAX_XMLATTR_VALUE_LENG + 1);
-                    mbstowcs(_xmlattr[i].value, szAttr, MAX_XMLATTR_VALUE_LENG);
-                    if(i == 0) _xmlattr[i].next = _xmlattr;
-                    else _xmlattr[i - 1].next = &_xmlattr[i]; //上一个next指向当前
-                    i++;
+                if(attrPtr != NULL) {
+                    //_XMLATTR _xmlattr[MAX_XMLATTR_NUM]; //认为节点数不超过16个 (这种方式内存地址会重复)
+                    _XMLATTR *_xmlattr = (_XMLATTR *)malloc(MAX_XMLATTR_NUM * sizeof(_XMLATTR)); //需要申请内存
+                    if(_xmlattr != NULL) {
+                        int i = 0;
+                        while(attrPtr != NULL) {
+                            szAttr = xmlGetProp(curNode, BAD_CAST attrPtr->name);
+                            wmemset(_xmlattr[i].key, 0, MAX_XMLATTR_KEY_LENG + 1);
+                            mbstowcs(_xmlattr[i].key, attrPtr->name, MAX_XMLATTR_KEY_LENG);
+                            wmemset(_xmlattr[i].value, 0, MAX_XMLATTR_VALUE_LENG + 1);
+                            mbstowcs(_xmlattr[i].value, szAttr, MAX_XMLATTR_VALUE_LENG);
+                            if(i == 0) _xmlattr[i].next = _xmlattr;
+                            else _xmlattr[i - 1].next = &_xmlattr[i]; //上一个next指向当前
+                            i++;
 
-                    xmlFree(szAttr);
-                    attrPtr = attrPtr->next;
-                }
-                if(i) {
-                    _xmlattr[i - 1].next = NULL; //如果要将next指向NULL
-                    _xmlnode[_n].attr = _xmlattr;
+                            xmlFree(szAttr);
+                            attrPtr = attrPtr->next;
+                        }
+                        if(i) {
+                            _xmlattr[i - 1].next = NULL; //如果要将next指向NULL
+                        }
+                        _xmlnode[_n].attr = _xmlattr;
+                    }
                 }
                 break;
             case XML_TEXT_NODE:
