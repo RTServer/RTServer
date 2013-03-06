@@ -142,15 +142,19 @@ int main(int argc, char **argv) {
     pthread_attr_init(&child_thread_attr);
     pthread_attr_setdetachstate(&child_thread_attr, PTHREAD_CREATE_DETACHED);
 
-    int i, n = atoi(argv[3]);
+    int i, n = atoi(argv[3]), ret;
     for(i = 0; i < n; i++) {
         //采用多线程并发3，新线程传递参数变量用指针
         ARG *arg;
         arg = (ARG *)malloc(sizeof(ARG));
         arg->n = i;
-        if(pthread_create(&child_thread, &child_thread_attr, talk_to_server, (void *)arg) == -1)
-            printf("pthread_create Failed : %s\n",strerror(errno));
+        ret = pthread_create(&child_thread, &child_thread_attr, talk_to_server, (void *)arg);
+        //当创建线程成功时，函数返回0，若不为0则说明创建线程失败，常见的错误返回代码为EAGAIN和EINVAL。
+        //前者表示系统限制创建新的线程，例如线程数目过多了；后者表示第二个参数代表的线程属性值非法。
+        if(ret != 0)
+            printf("pthread_create Failed : %s\n", strerror(errno));
     }
+    //pthread_join(child_thread, NULL);
     getchar();
     return 0;
 }

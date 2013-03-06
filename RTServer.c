@@ -44,7 +44,7 @@ TCP6: inuse 3UDP6: inuse 0RAW6: inuse 0 FRAG6: inuse 0 memory 0
  * @param  argv [description]
  * @return      [description]
  */
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     //设置为宽字符处理
     if (!setlocale(LC_CTYPE, "en_US.UTF-8")) {
         fprintf(stderr, "Can't set the specified locale! "
@@ -122,7 +122,7 @@ int main(int argc, char** argv) {
             printf("select failed!\n");
             break;
         }else {
-            if(FD_ISSET(slisten, &rset)) { // new connection
+            if(FD_ISSET(slisten, &rset)) { //新连接
                 len = sizeof(struct sockaddr);
                 if((connectfd = accept(slisten, (struct sockaddr*)&addr, &len)) == -1) {
                     perror("accept() error\n");
