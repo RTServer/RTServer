@@ -1,5 +1,5 @@
 /**
-gcc -o RTServer RTServer.c clientctrl.h clientctrl.c lib/json/cJSON.c -lm
+gcc -o RTServer RTServer.c clientctrl.c lib/json/cJSON.c lib/md5/md5.c -lm
 
 服务器的TCP状态(连接状态数量统计)
 netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'
@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
                     if((sockfd = client_getconfd(i)) == -1)
                         continue;
                     if(FD_ISSET(sockfd, &rset)) { //接收客户端信息
-                        if (!client_interface(sockfd, i)) {
+                        if (!client_interface(sockfd, i, maxi)) {
                             printf("客户端退出了\n");
                             close(sockfd);
                             FD_CLR(sockfd, &allset);

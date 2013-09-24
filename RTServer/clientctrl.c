@@ -4,6 +4,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "lib/json/cJSON.h"
+#include "lib/md5/md5.h"
+#include <sys/time.h>  
+#include <time.h>  
+int gettimeofday(struct timeval *tv, struct timezone *tz);
 
 #define MAX_CLIENT 1024
 #define MAX_BUF 10240
@@ -28,7 +32,7 @@ void client_init();
 int client_add(int connectfd, struct sockaddr_in addr);
 int client_getconfd(int i);
 void client_clean(int i);
-int client_interface(int sockfd, int i);
+int client_interface(int sockfd, int i, int maxi);
 
 
 /**
@@ -90,18 +94,59 @@ void client_clean(int i) {
 	_client[i].fd = -1;
 }
 
+void client_print(int maxi) {
+    int i;
+    if (!maxi) maxi = MAX_CLIENT;
+    for(i = 0; i < maxi; i++) {
+        printf("fd:%d--id:%d--name:%s--token:%s\n", _client[i].fd, _client[i].id, _client[i].name, _client[i].token);
+    }
+}
+
 /**
  * 根据id获取客户端索引
  * @param id [description]
  */
-int client_getindex(int id) {
+int client_getindex(int id, int maxi) {
     int i;
-    for(i = 0; i < MAX_CLIENT; i++) {
+    if (!maxi) maxi = MAX_CLIENT;
+    for(i = 0; i < maxi; i++) {
         if(_client[i].id == id) {
             return i;
         }
     }
     return -1;
+}
+
+
+char *get_current_time() {
+    static char timestr[20] = {0};
+    time_t t;
+    struct tm *nowtime;
+    time(&t);
+    nowtime = localtime(&t);
+    strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", nowtime);
+    return timestr;
+}
+
+char *RTS_unique() {
+    static char unique[32] = {0};
+    char timestr[20];
+    struct timeval tv;
+    gettimeofday(&tv, 0);
+    sprintf(timestr, "%u.%u", tv.tv_sec, tv.tv_usec);
+
+    MD5_CTX md5;
+    MD5Init(&md5);         
+    int i;
+    unsigned char decrypt[16];    
+    MD5Update(&md5, timestr, strlen((char *)timestr));
+    MD5Final(&md5, decrypt);
+    for(i = 0; i < 16; i++) {
+        char tmp[2] = {0};
+        sprintf(tmp, "%02x", decrypt[i]);
+        strcpy(unique + 2*i, tmp);
+    }
+    return unique;
 }
 
 /**
@@ -110,83 +155,111 @@ int client_getindex(int id) {
  * @param  i      [description]
  * @return        [description]
  */
-int client_interface(int sockfd, int i) {
+int client_interface(int sockfd, int i, int maxi) {
+    client_print(maxi);
 	bzero(buf, MAX_BUF + 1);
 	int n;
     if((n = recv(sockfd, buf, MAX_BUF, 0)) > 0) {
         //printf("第%d个客户端 IP:%s\n", i + 1, inet_ntoa(_client[i].addr.sin_addr));
 
         //解析客户端信息
-        int id, toid;
-        char *action, *name, *password, *token, *content;
-        cJSON *json;
+        int flag = 0, id = 0, toid = 0;
+        char *action = NULL, *name = NULL, *password = NULL, *token = NULL, *content = NULL;
+        cJSON *json = NULL, *json_tmp = NULL;
         json = cJSON_Parse(buf);
-        if (!json) {printf("Error before: [%s]\n", cJSON_GetErrorPtr());}
-        else {
-            action = cJSON_GetObjectItem(json, "action")->valuestring;
-            if (strcmp(action, "login") == 0) { //登录
-                name = cJSON_GetObjectItem(json, "name")->valuestring;
-                password = cJSON_GetObjectItem(json, "password")->valuestring;
-                id = cJSON_GetObjectItem(json, "id")->valueint;
-                if ((strcmp(name, "test1") == 0 && strcmp(password, "123456") == 0) || (strcmp(name, "test2") == 0 && strcmp(password, "123456") == 0)) {
-                    //登录成功，返回认证标示
-                    char *token = "abcdefg";
-                    _client[i].id = id;
-                    _client[i].name = name;
-                    _client[i].token = token;
-                    printf("%s登录成功\n", name, inet_ntoa(_client[i].addr.sin_addr));
-                    bzero(buf, MAX_BUF + 1);
-                    sprintf(buf, "{\"code\":\"0000\",\"message\":\"登录成功\",\"token\":\"%s\"}", token);
-                    send(sockfd, buf, strlen(buf), 0);
-                    return 1;
+        if (!json) {
+            //printf("Error before: [%s]\n", cJSON_GetErrorPtr());
+            bzero(buf, MAX_BUF + 1);
+            sprintf(buf, "{\"code\":\"0001\",\"message\":\"数据格式非法\"}");
+            send(sockfd, buf, strlen(buf), 0);
+            flag = 0;
+        } else {
+            json_tmp = cJSON_GetObjectItem(json, "action");
+            json_tmp && (action = json_tmp->valuestring);
+            if (!action) {
+                bzero(buf, MAX_BUF + 1);
+                sprintf(buf, "{\"code\":\"0005\",\"message\":\"参数非法\"}");
+                send(sockfd, buf, strlen(buf), 0);
+                flag = 0;
+            } else {
+                if (strcmp(action, "login") == 0) { //登录
+                    (json_tmp = cJSON_GetObjectItem(json, "name")) && (name = json_tmp->valuestring);
+                    (json_tmp = cJSON_GetObjectItem(json, "password")) && (password = json_tmp->valuestring);
+                    (json_tmp = cJSON_GetObjectItem(json, "id")) && (id = json_tmp->valueint);
+                    if (!name || !password || !id) {
+                        bzero(buf, MAX_BUF + 1);
+                        sprintf(buf, "{\"code\":\"0005\",\"message\":\"参数非法\"}");
+                        send(sockfd, buf, strlen(buf), 0);
+                        flag = 0;
+                    } else {
+                        if ((strcmp(name, "test1") == 0 && strcmp(password, "123456") == 0) || (strcmp(name, "test2") == 0 && strcmp(password, "123456") == 0)) {
+                            //登录成功，返回认证标示
+                            token = RTS_unique();
+                            _client[i].id = id;
+                            _client[i].name = name;
+                            _client[i].token = token;
+                            printf("%s登录成功\n", name, inet_ntoa(_client[i].addr.sin_addr));
+                            bzero(buf, MAX_BUF + 1);
+                            sprintf(buf, "{\"code\":\"0000\",\"message\":\"登录成功\",\"token\":\"%s\"}", token);
+                            send(sockfd, buf, strlen(buf), 0);
+                            flag = 1;
+                        } else {
+                            bzero(buf, MAX_BUF + 1);
+                            sprintf(buf, "{\"code\":\"0003\",\"message\":\"用户名或密码错误\"}");
+                            send(sockfd, buf, strlen(buf), 0);
+                            flag = 0;
+                        }
+                    }
+                } else if (strcmp(action, "message") == 0) { //聊天
+                    (json_tmp = cJSON_GetObjectItem(json, "token")) && (token = json_tmp->valuestring);
+                    (json_tmp = cJSON_GetObjectItem(json, "toid")) && (toid = json_tmp->valueint);
+                    (json_tmp = cJSON_GetObjectItem(json, "id")) && (id = json_tmp->valueint);
+                    (json_tmp = cJSON_GetObjectItem(json, "content")) && (content = json_tmp->valuestring);
+                    if (!token || !toid || !id || !content) {
+                        bzero(buf, MAX_BUF + 1);
+                        sprintf(buf, "{\"code\":\"0005\",\"message\":\"参数非法\"}");
+                        send(sockfd, buf, strlen(buf), 0);
+                        flag = 0;
+                    } else {
+                        //认证信息失败，退出客户端
+                        if (strcmp(token, _client[i].token) != 0) {
+                            bzero(buf, MAX_BUF + 1);
+                            sprintf(buf, "{\"code\":\"0004\",\"message\":\"token非法\"}");
+                            send(sockfd, buf, strlen(buf), 0);
+                            flag = 0;
+                        } else {
+                            flag = 1;
+                            int index;
+                            index = client_getindex(toid, maxi); //获取接受者索引
+                            if (index == -1 || _client[index].fd == -1) {
+                                bzero(buf, MAX_BUF + 1);
+                                sprintf(buf, "{\"code\":\"1002\",\"message\":\"对方不在线\"}");
+                                send(sockfd, buf, strlen(buf), 0);
+                            } else {
+                                if (_client[index].id == id) { //如果接受者是自己，则发出警告
+                                    bzero(buf, MAX_BUF + 1);
+                                    sprintf(buf, "{\"code\":\"1001\",\"message\":\"不能给自己发消息\"}");
+                                    send(sockfd, buf, strlen(buf), 0);
+                                } else {
+                                    bzero(buf, MAX_BUF + 1);
+                                    sprintf(buf, "{\"code\":\"0000\",\"message\":\"发送成功\",\"content\":\"%s\"}", content);
+                                    send(_client[index].fd, buf, strlen(buf), 0);
+                                }
+                            }
+                        }
+                    }
                 } else {
                     bzero(buf, MAX_BUF + 1);
-                    sprintf(buf, "{\"code\":\"1001\",\"message\":\"用户名或密码错误\"}");
+                    sprintf(buf, "{\"code\":\"0002\",\"message\":\"动作非法\"}");
                     send(sockfd, buf, strlen(buf), 0);
-                    return 0;
+                    flag = 0;
                 }
-            } else if (strcmp(action, "message") == 0) { //聊天
-                token = cJSON_GetObjectItem(json, "token")->valuestring;
-                toid = cJSON_GetObjectItem(json, "toid")->valueint;
-                id = cJSON_GetObjectItem(json, "id")->valueint;
-                content = cJSON_GetObjectItem(json, "content")->valuestring;
-                int index;
-                index = client_getindex(toid);
-                if (index != -1) {
-                    //认证信息失败，退出客户端
-                    if (strcmp(token, _client[i].token) != 0) {
-                        bzero(buf, MAX_BUF + 1);
-                        sprintf(buf, "{\"code\":\"1002\",\"message\":\"token非法\"}");
-                        send(sockfd, buf, strlen(buf), 0);
-                        return 0;
-                    }
-
-                    //判断不是自己
-                    if (_client[index].id == id) {
-                        return 1;
-                    }
-
-                    bzero(buf, MAX_BUF + 1);
-                    sprintf(buf, "{\"code\":\"0000\",\"message\":\"发送成功\",\"content\":\"%s\"}", content);
-                    send(_client[index].fd, buf, strlen(buf), 0);
-                    return 1;
-                }
-                return 0;
-            } else {
-                bzero(buf, MAX_BUF + 1);
-                sprintf(buf, "{\"code\":\"0002\",\"message\":\"动作非法\"}");
-                send(sockfd, buf, strlen(buf), 0);
-                return 0;
             }
-            
-
-            cJSON_Delete(json);
         }
 
-        bzero(buf, MAX_BUF + 1);
-        sprintf(buf, "{\"code\":\"0001\",\"message\":\"未知错误\"}");
-        send(sockfd, buf, strlen(buf), 0);
-        return 0;
+        //释放内存
+        cJSON_Delete(json);
+        return flag;
     }
 
     return 0; //客户端退出时
