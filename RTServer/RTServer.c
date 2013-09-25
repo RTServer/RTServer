@@ -1,5 +1,5 @@
 /**
-gcc -o RTServer RTServer.c clientctrl.c lib/json/cJSON.c lib/md5/md5.c -lm
+gcc -o RTServer RTServer.c lib/client/interface.c lib/tools/base.c lib/json/cJSON.c lib/md5/md5.c -lm
 
 服务器的TCP状态(连接状态数量统计)
 netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'
@@ -33,8 +33,6 @@ TCP6: inuse 3UDP6: inuse 0RAW6: inuse 0 FRAG6: inuse 0 memory 0
 #include <string.h>
 #include <netinet/in.h>
 #include <locale.h>
-
-#include "clientctrl.h"
 
 #define MAX_LENGTH 1024 //最大监听数
 
