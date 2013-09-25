@@ -145,11 +145,12 @@ int main(int argc, char **argv) {
                         continue;
                     if(FD_ISSET(sockfd, &rset)) { //接收客户端信息
                         if (!client_interface(sockfd, i, maxi)) {
-                            printf("客户端退出了\n");
                             close(sockfd);
                             FD_CLR(sockfd, &allset);
                             client_clean(i);
+                            printf("客户端{index:%d}退出了\n", i);
                         }
+                        client_print(maxi);
                     }
                 }
             }
