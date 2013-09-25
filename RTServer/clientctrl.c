@@ -1,23 +1,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "lib/json/cJSON.h"
 #include "lib/md5/md5.h"
 #include <sys/time.h>  
-#include <time.h>  
+#include <time.h>
 int gettimeofday(struct timeval *tv, struct timezone *tz);
 
 #define MAX_CLIENT 1024
 #define MAX_BUF 10240
+#define MAX_NAME_LENGTH 20
+#define MAX_TOKEN_LENGTH 32
+#define MAX_CONTENT_LENGTH 1024
+#define MAX_ACTION_LENGTH 15
+#define MAX_PASSWORD_LENGTH 32
 
 //定义接入客户端数据结构
 typedef struct _CLIENT {
     int fd;
     int id;
-    char *name;
-    char *token;
+    char name[MAX_NAME_LENGTH + 1];
+    char token[MAX_TOKEN_LENGTH + 1];
     struct sockaddr_in addr;
 }_CLIENT;
 
@@ -46,6 +52,8 @@ void client_init() {
 	int i;
 	for(i = 0; i < MAX_CLIENT; i++) {
         _client[i].fd = -1;
+        memset(_client[i].name, 0, MAX_NAME_LENGTH + 1);
+        memset(_client[i].token, 0, MAX_TOKEN_LENGTH + 1);
     }
 }
 
@@ -96,9 +104,8 @@ void client_clean(int i) {
 
 void client_print(int maxi) {
     int i;
-    if (!maxi) maxi = MAX_CLIENT;
-    for(i = 0; i < maxi; i++) {
-        printf("fd:%d--id:%d--name:%s--token:%s\n", _client[i].fd, _client[i].id, _client[i].name, _client[i].token);
+    for(i = 0; i <= maxi; i++) {
+        printf("index:%d--fd:%d--id:%d--name:%s--token:%s\n", i, _client[i].fd, _client[i].id, _client[i].name, _client[i].token);
     }
 }
 
@@ -108,8 +115,7 @@ void client_print(int maxi) {
  */
 int client_getindex(int id, int maxi) {
     int i;
-    if (!maxi) maxi = MAX_CLIENT;
-    for(i = 0; i < maxi; i++) {
+    for(i = 0; i <= maxi; i++) {
         if(_client[i].id == id) {
             return i;
         }
@@ -156,7 +162,6 @@ char *RTS_unique() {
  * @return        [description]
  */
 int client_interface(int sockfd, int i, int maxi) {
-    client_print(maxi);
 	bzero(buf, MAX_BUF + 1);
 	int n;
     if((n = recv(sockfd, buf, MAX_BUF, 0)) > 0) {
@@ -164,7 +169,11 @@ int client_interface(int sockfd, int i, int maxi) {
 
         //解析客户端信息
         int flag = 0, id = 0, toid = 0;
-        char *action = NULL, *name = NULL, *password = NULL, *token = NULL, *content = NULL;
+        char action[MAX_ACTION_LENGTH + 1] = {0};
+        char name[MAX_NAME_LENGTH + 1] = {0};
+        char password[MAX_PASSWORD_LENGTH + 1] = {0};
+        char token[MAX_TOKEN_LENGTH + 1] = {0};
+        wchar_t content[MAX_CONTENT_LENGTH + 1] = {0};
         cJSON *json = NULL, *json_tmp = NULL;
         json = cJSON_Parse(buf);
         if (!json) {
@@ -174,8 +183,7 @@ int client_interface(int sockfd, int i, int maxi) {
             send(sockfd, buf, strlen(buf), 0);
             flag = 0;
         } else {
-            json_tmp = cJSON_GetObjectItem(json, "action");
-            json_tmp && (action = json_tmp->valuestring);
+            (json_tmp = cJSON_GetObjectItem(json, "action")) && strncpy(action, json_tmp->valuestring, MAX_ACTION_LENGTH);
             if (!action) {
                 bzero(buf, MAX_BUF + 1);
                 sprintf(buf, "{\"code\":\"0005\",\"message\":\"参数非法\"}");
@@ -183,8 +191,8 @@ int client_interface(int sockfd, int i, int maxi) {
                 flag = 0;
             } else {
                 if (strcmp(action, "login") == 0) { //登录
-                    (json_tmp = cJSON_GetObjectItem(json, "name")) && (name = json_tmp->valuestring);
-                    (json_tmp = cJSON_GetObjectItem(json, "password")) && (password = json_tmp->valuestring);
+                    (json_tmp = cJSON_GetObjectItem(json, "name")) && strncpy(name, json_tmp->valuestring, MAX_NAME_LENGTH);
+                    (json_tmp = cJSON_GetObjectItem(json, "password")) && strncpy(password, json_tmp->valuestring, MAX_PASSWORD_LENGTH);
                     (json_tmp = cJSON_GetObjectItem(json, "id")) && (id = json_tmp->valueint);
                     if (!name || !password || !id) {
                         bzero(buf, MAX_BUF + 1);
@@ -194,10 +202,10 @@ int client_interface(int sockfd, int i, int maxi) {
                     } else {
                         if ((strcmp(name, "test1") == 0 && strcmp(password, "123456") == 0) || (strcmp(name, "test2") == 0 && strcmp(password, "123456") == 0)) {
                             //登录成功，返回认证标示
-                            token = RTS_unique();
+                            strncpy(token, RTS_unique(), MAX_TOKEN_LENGTH);
                             _client[i].id = id;
-                            _client[i].name = name;
-                            _client[i].token = token;
+                            strncpy(_client[i].name, name, MAX_NAME_LENGTH);
+                            strncpy(_client[i].token, token, MAX_TOKEN_LENGTH);
                             printf("%s登录成功\n", name, inet_ntoa(_client[i].addr.sin_addr));
                             bzero(buf, MAX_BUF + 1);
                             sprintf(buf, "{\"code\":\"0000\",\"message\":\"登录成功\",\"token\":\"%s\"}", token);
@@ -211,10 +219,10 @@ int client_interface(int sockfd, int i, int maxi) {
                         }
                     }
                 } else if (strcmp(action, "message") == 0) { //聊天
-                    (json_tmp = cJSON_GetObjectItem(json, "token")) && (token = json_tmp->valuestring);
+                    (json_tmp = cJSON_GetObjectItem(json, "token")) && strncpy(token, json_tmp->valuestring, MAX_TOKEN_LENGTH);
                     (json_tmp = cJSON_GetObjectItem(json, "toid")) && (toid = json_tmp->valueint);
                     (json_tmp = cJSON_GetObjectItem(json, "id")) && (id = json_tmp->valueint);
-                    (json_tmp = cJSON_GetObjectItem(json, "content")) && (content = json_tmp->valuestring);
+                    (json_tmp = cJSON_GetObjectItem(json, "content")) && mbstowcs(content, json_tmp->valuestring, MAX_CONTENT_LENGTH);
                     if (!token || !toid || !id || !content) {
                         bzero(buf, MAX_BUF + 1);
                         sprintf(buf, "{\"code\":\"0005\",\"message\":\"参数非法\"}");
@@ -256,6 +264,9 @@ int client_interface(int sockfd, int i, int maxi) {
                 }
             }
         }
+
+        client_print(maxi);
+        printf("maxi:%d--i:%d\n", maxi, i);
 
         //释放内存
         cJSON_Delete(json);
