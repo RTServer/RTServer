@@ -226,7 +226,7 @@ int client_interface(int sockfd, int i, int maxi) {
                             if (strcmp(name, "test2") == 0) realid = 2;
                             if (strlen(_client[i].token) != 0) { //该设备已经登录了账号，不能再做登录操作
                                 bzero(buf, MAX_BUF + 1);
-                                sprintf(buf, "{\"code\":\"1003\",\"message\":\"该设备已经登录了账号，不能再做登录操作\"}");
+                                sprintf(buf, "{\"code\":\"1004\",\"message\":\"该设备已经登录了账号，不能再做登录操作\"}");
                                 send(sockfd, buf, strlen(buf), 0);
                             } else {
                                 int index = client_getindex(realid, maxi);
