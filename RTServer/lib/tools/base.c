@@ -21,7 +21,7 @@ char *RTS_unique() {
     char timestr[20];
     struct timeval tv;
     gettimeofday(&tv, 0);
-    sprintf(timestr, "%u.%u", tv.tv_sec, tv.tv_usec);
+    sprintf(timestr, "%u.%u", (unsigned int)tv.tv_sec, (unsigned int)tv.tv_usec);
 
     MD5_CTX md5;
     MD5Init(&md5);         
