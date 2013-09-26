@@ -9,7 +9,7 @@
 int gettimeofday(struct timeval *tv, struct timezone *tz);
 
 char *RTS_current_datetime() {
-    static char timestr[20] = {0};
+    char *timestr = (char *)malloc(20 * sizeof(char));
     time_t t;
     struct tm *nowtime;
     time(&t);
@@ -32,7 +32,7 @@ char *RTS_unique() {
     MD5Update(&md5, timestr, strlen((char *)timestr));
     MD5Final(&md5, decrypt);
     for(i = 0; i < 16; i++) {
-        char tmp[2] = {0};
+        char tmp[3] = {0};
         sprintf(tmp, "%02x", decrypt[i]);
         strcpy(unique + 2*i, tmp);
     }
@@ -48,7 +48,7 @@ char *RTS_md5(char *str) {
     MD5Update(&md5, str, strlen((char *)str));
     MD5Final(&md5, decrypt);
     for(i = 0; i < 16; i++) {
-        char tmp[2] = {0};
+        char tmp[3] = {0};
         sprintf(tmp, "%02x", decrypt[i]);
         strcpy(md5str + 2*i, tmp);
     }
@@ -66,6 +66,10 @@ char *RTS_rand() {
         strcpy(randstr + i, tmp);
     }
     return randstr;
+}
+
+char *RTS_hash(char *password, char *salt) {
+    return RTS_md5(strcat(salt, RTS_md5(password)));
 }
 
 void RTS_send(int sockfd, const char *content) {

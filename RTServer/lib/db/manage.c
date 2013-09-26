@@ -12,27 +12,30 @@ gcc -o manage manage.c data.c ../tools/base.c ../md5/md5.c -lsqlite3
 */
 int insert_data() {
 	int flag = 1;
-	char name[20], password[32], salt[6], data[5][32];
-	int status = 0, rid;
+	char name[20], password[32], salt[6], ip[15], *datetime;
+	int rid;
 	while (flag == 1)	{		
 		getchar();
-		status = 0;
-		memset(data, 0, sizeof(data));
 		printf("name:");
 		scanf("%s", name);
 		printf("password:");
-		scanf("%s", data[1]);
+		scanf("%s", password);
 		printf("ip:");
-		scanf("%s", data[3]);
-		printf("datetime:");
-		scanf("%s", data[4]);
-		printf("status:");
-		scanf("%d", &status);
+		scanf("%s", ip);
 
-		salt = RTS_rand();
-		password = RTS_md5(strcat(salt, RTS_md5(password));
+		printf("%s\n", name);
+		memset(salt, 0, 6);
+		sprintf(salt, "%s", RTS_rand());
+		printf("%s\n", name);
+		strcpy(password, RTS_hash(password, salt));
+		printf("%s\n", name);
+		strcpy(datetime, "abcd");
+		datetime = RTS_current_datetime();
+		free(datetime);
+		datetime = NULL;
+		//printf("%s\n", name);
 
-		rid = user_add(name, password, salt, data[3], data[4], status);
+		rid = user_add(name, password, salt, ip, datetime, 0);
 		if (rid == 0) {
 			printf("have\n");
 		} else if (rid > 0) {
