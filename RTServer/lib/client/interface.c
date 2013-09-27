@@ -4,9 +4,10 @@
 #include <wchar.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "../json/cJSON.h"
 #include "interface.h"
+#include "../json/cJSON.h"
 #include "../tools/base.h"
+#include "../db/data.h"
 
 
 /**
@@ -141,32 +142,37 @@ int client_interface(int sockfd, int i, int maxi) {
                         RTS_send(sockfd, "{\"code\":\"0005\",\"message\":\"参数非法\"}");
                         flag = 0;
                     } else {
-                        if ((strcmp(name, "test1") == 0 && strcmp(password, "123456") == 0) || (strcmp(name, "test2") == 0 && strcmp(password, "123456") == 0)) {
-
-                            //用户名密码验证通过后，判断当前账号是否已登录
-                            //这时应该已经拿到了用户的id，这里暂时定义test1的id为1，test2的id为2
-                            int realid = 1;
-                            if (strcmp(name, "test1") == 0) realid = 1;
-                            if (strcmp(name, "test2") == 0) realid = 2;
-                            if (strlen(_client[i].token) != 0) { //该设备已经登录了账号，不能再做登录操作
-                                RTS_send(sockfd, "{\"code\":\"1004\",\"message\":\"该设备已经登录了账号，不能再做登录操作\"}");
-                            } else {
-                                int index = client_getindex(realid, maxi);
-                                if (index == -1 || _client[index].fd == -1 || strlen(_client[index].token) == 0) { //未登录，直接执行登录赋值操作
-                                    //登录成功，返回认证标示
-                                    strncpy(token, RTS_unique(), MAX_TOKEN_LENGTH);
-                                    _client[i].id = realid;
-                                    strncpy(_client[i].name, name, MAX_NAME_LENGTH);
-                                    strncpy(_client[i].token, token, MAX_TOKEN_LENGTH);
-                                    printf("%s登录成功--IP:%s\n", name, inet_ntoa(_client[i].addr.sin_addr));
-                                    bzero(buf, MAX_BUF + 1);
-                                    sprintf(buf, "{\"code\":\"0000\",\"message\":\"登录成功\",\"token\":\"%s\",\"id\":%d}", token, realid);
-                                    RTS_send(sockfd, buf);
+                        //验证用户名密码
+                        _RTS_USER _rts_user = user_get(0, name);
+                        if (_rts_user.id > 0) {
+                            char *pwdhash = RTS_hash(password, _rts_user.salt);
+                            if (strcmp(_rts_user.password, pwdhash) == 0) {
+                                //用户名密码验证通过后，判断当前账号是否已登录
+                                //这时应该已经拿到了用户的id
+                                if (strlen(_client[i].token) != 0) { //该设备已经登录了账号，不能再做登录操作
+                                    RTS_send(sockfd, "{\"code\":\"1004\",\"message\":\"该设备已经登录了账号，不能再做登录操作\"}");
                                 } else {
-                                    RTS_send(sockfd, "{\"code\":\"1003\",\"message\":\"该用户已经在其他地方成功登录\"}");
+                                    int index = client_getindex(_rts_user.id, maxi);
+                                    if (index == -1 || _client[index].fd == -1 || strlen(_client[index].token) == 0) { //未登录，直接执行登录赋值操作
+                                        //登录成功，返回认证标示
+                                        strncpy(token, RTS_unique(), MAX_TOKEN_LENGTH);
+                                        _client[i].id = _rts_user.id;
+                                        strncpy(_client[i].name, name, MAX_NAME_LENGTH);
+                                        strncpy(_client[i].token, token, MAX_TOKEN_LENGTH);
+                                        printf("%s登录成功--IP:%s\n", name, inet_ntoa(_client[i].addr.sin_addr));
+                                        bzero(buf, MAX_BUF + 1);
+                                        sprintf(buf, "{\"code\":\"0000\",\"message\":\"登录成功\",\"token\":\"%s\",\"id\":%d}", token, _rts_user.id);
+                                        RTS_send(sockfd, buf);
+                                    } else {
+                                        RTS_send(sockfd, "{\"code\":\"1003\",\"message\":\"该用户已经在其他地方成功登录\"}");
+                                    }
                                 }
+                                flag = 1;
+                            } else {
+                                RTS_send(sockfd, "{\"code\":\"0003\",\"message\":\"用户名或密码错误\"}");
+                                flag = 0;
                             }
-                            flag = 1;
+                            free(pwdhash); pwdhash = NULL;
                         } else {
                             RTS_send(sockfd, "{\"code\":\"0003\",\"message\":\"用户名或密码错误\"}");
                             flag = 0;

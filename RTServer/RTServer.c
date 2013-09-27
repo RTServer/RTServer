@@ -1,5 +1,5 @@
 /**
-gcc -o RTServer RTServer.c lib/client/interface.c lib/tools/base.c lib/json/cJSON.c lib/md5/md5.c -lm
+gcc -o RTServer RTServer.c lib/client/interface.c lib/tools/base.c lib/db/data.c lib/json/cJSON.c lib/md5/md5.c -lm -lsqlite3
 
 服务器的TCP状态(连接状态数量统计)
 netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'

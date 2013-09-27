@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include "data.h"
 
 sqlite3 *pdb = NULL ;
@@ -129,6 +131,63 @@ int user_add(char *name, char *password, char *salt,
 	sqlite3_close(pdb);
 
 	return id;
+}
+
+/**
+* 获取用户信息
+*/
+_RTS_USER user_get(int id, char *name) {
+	static _RTS_USER _rts_user;
+	int rc = 0 ;
+	char strsql[1024];
+	
+	if (open_db() == -1) {
+		return _rts_user;
+	}
+
+	sqlite3_stmt *stmt = NULL;
+
+	memset(strsql, 0, 1024);
+	strcpy(strsql, "SELECT * FROM ");
+	strcat(strsql, TABLE_NAME_USER);
+	id && strcat(strsql, " WHERE id = ?");
+	id || strcat(strsql, " WHERE name = ?");
+	rc = sqlite3_prepare_v2(pdb, strsql, strlen(strsql), &stmt, NULL);
+	if (rc != SQLITE_OK) {
+		if (stmt) {
+			sqlite3_finalize(stmt);
+		}
+		sqlite3_close(pdb);
+		return _rts_user;
+	}
+	id && sqlite3_bind_int(stmt, 1, id);
+	id || sqlite3_bind_text(stmt, 1, name, strlen(name), NULL);
+	int nColumn = sqlite3_column_count(stmt);
+	int i;
+	do {	
+		rc = sqlite3_step(stmt);
+		if (rc == SQLITE_ROW) {
+			for(i = 0; i < nColumn; i++) {
+				const char *colum_name = sqlite3_column_name(stmt, i);
+				(strcmp(colum_name, "id") == 0) && (_rts_user.id = sqlite3_column_int(stmt, i));
+				(strcmp(colum_name, "password") == 0) && strcpy(_rts_user.password, sqlite3_column_text(stmt, i));
+				(strcmp(colum_name, "salt") == 0) && strcpy(_rts_user.salt, sqlite3_column_text(stmt, i));
+				(strcmp(colum_name, "ip") == 0) && strcpy(_rts_user.ip, sqlite3_column_text(stmt, i));
+				(strcmp(colum_name, "datetime") == 0) && strcpy(_rts_user.datetime, sqlite3_column_text(stmt, i));
+				(strcmp(colum_name, "status") == 0) && (_rts_user.status = sqlite3_column_int(stmt, i));
+			}
+		} else if (rc == SQLITE_DONE) {
+			//printf("Select finish\n");
+			break;
+		} else {
+			//printf("Select faile\n");
+			sqlite3_finalize(stmt);
+			break;
+		}
+	} while(1);
+	sqlite3_finalize(stmt);
+	sqlite3_close(pdb);
+	return _rts_user;
 }
 
 /**

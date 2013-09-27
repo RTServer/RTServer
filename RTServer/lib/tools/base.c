@@ -14,12 +14,12 @@ char *RTS_current_datetime() {
     struct tm *nowtime;
     time(&t);
     nowtime = localtime(&t);
-    strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", nowtime);
+    strftime(timestr, 20, "%Y-%m-%d %H:%M:%S", nowtime);
     return timestr;
 }
 
 char *RTS_unique() {
-    static char unique[32] = {0};
+    char *unique = (char *)malloc(33 * sizeof(char));
     char timestr[20];
     struct timeval tv;
     gettimeofday(&tv, 0);
@@ -40,7 +40,7 @@ char *RTS_unique() {
 }
 
 char *RTS_md5(char *str) {
-    static char md5str[32] = {0};
+    char *md5str = (char *)malloc(33 * sizeof(char));
     MD5_CTX md5;
     MD5Init(&md5);         
     int i;
@@ -56,9 +56,11 @@ char *RTS_md5(char *str) {
 }
 
 char *RTS_rand() {
-    static char randstr[6] = {0};
+    char *randstr = (char *)malloc(7 * sizeof(char));
     int i;
-    //srand((unsigned)time(NULL)); //这样1s内的随机数就一样了，所以注释掉了
+    struct timeval tv;
+    gettimeofday(&tv, 0);
+    srand((unsigned int)tv.tv_sec + (unsigned int)tv.tv_usec);
     for (i = 0; i < 6; i++) {//要想大写字母,将97改成65
         char tmp[2] = {0};
         if (rand() % 2) sprintf(tmp, "%c", 97 + rand() % 26);
@@ -69,7 +71,13 @@ char *RTS_rand() {
 }
 
 char *RTS_hash(char *password, char *salt) {
-    return RTS_md5(strcat(salt, RTS_md5(password)));
+    char *md5str = RTS_md5(password);
+    char saltpwd[39] = {0};
+    strcpy(saltpwd, salt);
+    strcat(saltpwd, md5str);
+    free(md5str);
+    md5str = NULL;
+    return RTS_md5(saltpwd);
 }
 
 void RTS_send(int sockfd, const char *content) {
