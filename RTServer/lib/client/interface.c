@@ -163,6 +163,12 @@ int client_interface(int sockfd, int i, int maxi) {
                                         bzero(buf, MAX_BUF + 1);
                                         sprintf(buf, "{\"code\":\"0000\",\"message\":\"登录成功\",\"token\":\"%s\",\"id\":%d}", token, _rts_user.id);
                                         RTS_send(sockfd, buf);
+
+                                        //修改登录成功标识
+                                        _RTS_USER _rts_user2 = user_init();
+                                        _rts_user2.id = _rts_user.id;
+                                        _rts_user2.status = 1;
+                                        user_edit(_rts_user2);
                                     } else {
                                         RTS_send(sockfd, "{\"code\":\"1003\",\"message\":\"该用户已经在其他地方成功登录\"}");
                                     }

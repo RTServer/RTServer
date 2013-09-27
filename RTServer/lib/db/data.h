@@ -18,11 +18,13 @@ typedef struct _RTS_USER {
 	int status;
 }_RTS_USER;
 
+extern _RTS_USER user_init();
 extern int open_db();
 extern int creat_table();
 extern int user_add(char *name, char *password, char *salt,
 	char *ip, char *datetime, int status);
 extern _RTS_USER user_get(int id, char *name);
+extern int user_edit(_RTS_USER _rts_user);
 extern int insert_data();
 extern int search_data();
 

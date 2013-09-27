@@ -6,6 +6,21 @@ sqlite3 *pdb = NULL ;
 char *szErrMsg = 0 ;
 
 /**
+* 初始化一个用户结构
+*/
+_RTS_USER user_init() {
+	static _RTS_USER _rts_user;
+    _rts_user.id = -1;
+    memset(_rts_user.name, 0, 21);
+    memset(_rts_user.password, 0, 33);
+    memset(_rts_user.salt, 0, 7);
+    memset(_rts_user.ip, 0, 16);
+    memset(_rts_user.datetime, 0, 20);
+    _rts_user.status = -1;
+    return _rts_user;
+}
+
+/**
  * 打开数据库
  * pdb 类型为sqlite
  */
@@ -31,9 +46,7 @@ int creat_table() {
 	strcpy(strsql, "CREATE TABLE ");
 	strcat(strsql, TABLE_NAME_USER);
 	strcat(strsql, "(id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(20) NOT NULL DEFAULT '', password VARCHAR(32) NOT NULL DEFAULT '', salt VARCHAR(6) NOT NULL DEFAULT '', ip VARCHAR(15) NOT NULL DEFAULT '', datetime DATETIME DEFAULT '', status BOOLEAN DEFAULT 0)");
-	if (open_db != 0) {
-		open_db();
-	}
+	if (open_db() == -1) return -1;
 	rc = sqlite3_exec(pdb, strsql, 0, 0, &szErrMsg);
 	if (rc != 0) {
 		fprintf(stderr, "can't open database: %s\n", sqlite3_errmsg(pdb));
@@ -51,9 +64,7 @@ int user_add(char *name, char *password, char *salt,
 	int rc = 0 ;
 	char strsql[1024];
 	
-	if (open_db() == -1) {
-		return -1;
-	}
+	if (open_db() == -1) return -1;
 
 	sqlite3_stmt *stmt = NULL;
 
@@ -141,9 +152,7 @@ _RTS_USER user_get(int id, char *name) {
 	int rc = 0 ;
 	char strsql[1024];
 	
-	if (open_db() == -1) {
-		return _rts_user;
-	}
+	if (open_db() == -1) return _rts_user;
 
 	sqlite3_stmt *stmt = NULL;
 
@@ -170,6 +179,7 @@ _RTS_USER user_get(int id, char *name) {
 			for(i = 0; i < nColumn; i++) {
 				const char *colum_name = sqlite3_column_name(stmt, i);
 				(strcmp(colum_name, "id") == 0) && (_rts_user.id = sqlite3_column_int(stmt, i));
+				(strcmp(colum_name, "name") == 0) && strcpy(_rts_user.name, sqlite3_column_text(stmt, i));
 				(strcmp(colum_name, "password") == 0) && strcpy(_rts_user.password, sqlite3_column_text(stmt, i));
 				(strcmp(colum_name, "salt") == 0) && strcpy(_rts_user.salt, sqlite3_column_text(stmt, i));
 				(strcmp(colum_name, "ip") == 0) && strcpy(_rts_user.ip, sqlite3_column_text(stmt, i));
@@ -191,13 +201,84 @@ _RTS_USER user_get(int id, char *name) {
 }
 
 /**
+* 修改用户表
+*/
+int user_edit(_RTS_USER _rts_user) {
+	int rc = 0 ;
+	char strsql[1025], tmp[1025];
+	int len = 0, sqllength = 0;
+
+	if (_rts_user.id <= 0) return -1;
+	
+	if (open_db() == -1) return -1;
+
+	memset(strsql, 0, 1025);
+	memset(tmp, 0, 1025);
+
+	sprintf(tmp, "UPDATE %s SET ", TABLE_NAME_USER);
+	len = strlen(tmp);
+	sqllength += len;
+	if (sqllength > 1024) return -1;
+	strncat(strsql, tmp, len);
+
+	if (strlen(_rts_user.password) > 0) {
+		sprintf(tmp, "password='%s',", _rts_user.password);
+		len = strlen(tmp);
+		sqllength += len;
+		if (sqllength > 1024) return -1;
+		strncat(strsql, tmp, len);
+	}
+	if (strlen(_rts_user.salt) > 0) {
+		sprintf(tmp, "salt='%s',", _rts_user.salt);
+		len = strlen(tmp);
+		sqllength += len;
+		if (sqllength > 1024) return -1;
+		strncat(strsql, tmp, len);
+	}
+	if (strlen(_rts_user.ip) > 0) {
+		sprintf(tmp, "ip='%s',", _rts_user.ip);
+		len = strlen(tmp);
+		sqllength += len;
+		if (sqllength > 1024) return -1;
+		strncat(strsql, tmp, len);
+	}
+	if (strlen(_rts_user.datetime) > 0) {
+		sprintf(tmp, "datetime='%s',", _rts_user.datetime);
+		len = strlen(tmp);
+		sqllength += len;
+		if (sqllength > 1024) return -1;
+		strncat(strsql, tmp, len);
+	}
+	if (_rts_user.status == 1 || _rts_user.status == 0) {
+		sprintf(tmp, "status=%d,", _rts_user.status);
+		len = strlen(tmp);
+		sqllength += len;
+		if (sqllength > 1024) return -1;
+		strncat(strsql, tmp, len);
+	}
+
+	strsql[sqllength - 1] = '\0';
+	sprintf(tmp, " WHERE id=%d", _rts_user.id);
+	len = strlen(tmp);
+	sqllength += len;
+	if (sqllength > 1024) return -1;
+	strncat(strsql, tmp, len);
+
+	rc = sqlite3_exec(pdb, strsql, 0, 0, &szErrMsg);
+	if (rc != SQLITE_OK) {
+		fprintf(stderr, "can't open database: %s\n", sqlite3_errmsg(pdb));
+		return -1;
+	}
+	sqlite3_close(pdb);
+	return 0;
+}
+
+/**
 * 数据的查询
 */
 int search_data() {
 	int rc = 0;
-	if (open_db() == -1) {
-		return -1;
-	}
+	if (open_db() == -1) return -1;
 	char strsql[1024];
 	memset(strsql, 0, 1024);
 	strcpy(strsql, "SELECT * FROM ");
