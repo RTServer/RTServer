@@ -41,8 +41,8 @@ int open_db() {
 */
 int creat_table() {
 	int rc;
-	char strsql[1024];
-	memset(strsql, 0, 1024);
+	char strsql[1025];
+	memset(strsql, 0, 1025);
 	strcpy(strsql, "CREATE TABLE ");
 	strcat(strsql, TABLE_NAME_USER);
 	strcat(strsql, "(id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(20) NOT NULL DEFAULT '', password VARCHAR(32) NOT NULL DEFAULT '', salt VARCHAR(6) NOT NULL DEFAULT '', ip VARCHAR(15) NOT NULL DEFAULT '', datetime DATETIME DEFAULT '', status BOOLEAN DEFAULT 0)");
@@ -62,14 +62,14 @@ int creat_table() {
 int user_add(char *name, char *password, char *salt,
 	char *ip, char *datetime, int status) {
 	int rc = 0 ;
-	char strsql[1024];
+	char strsql[1025];
 	
 	if (open_db() == -1) return -1;
 
 	sqlite3_stmt *stmt = NULL;
 
 	//判断是否已存在该用户名，如果存在返回0
-	memset(strsql, 0, 1024);
+	memset(strsql, 0, 1025);
 	strcpy(strsql, "SELECT id FROM ");
 	strcat(strsql, TABLE_NAME_USER);
 	strcat(strsql, " WHERE name = ?");
@@ -111,7 +111,7 @@ int user_add(char *name, char *password, char *salt,
 		return 0;
 	}
 
-	memset(strsql, 0, 1024);
+	memset(strsql, 0, 1025);
 	strcpy(strsql, "INSERT INTO ");
 	strcat(strsql, TABLE_NAME_USER);
 	strcat(strsql, " VALUES(NULL, ?, ?, ?, ?, ?, ?)");
@@ -150,13 +150,13 @@ int user_add(char *name, char *password, char *salt,
 _RTS_USER user_get(int id, char *name) {
 	static _RTS_USER _rts_user;
 	int rc = 0 ;
-	char strsql[1024];
+	char strsql[1025];
 	
 	if (open_db() == -1) return _rts_user;
 
 	sqlite3_stmt *stmt = NULL;
 
-	memset(strsql, 0, 1024);
+	memset(strsql, 0, 1025);
 	strcpy(strsql, "SELECT * FROM ");
 	strcat(strsql, TABLE_NAME_USER);
 	id && strcat(strsql, " WHERE id = ?");
@@ -263,6 +263,30 @@ int user_edit(_RTS_USER _rts_user) {
 	sqllength += len;
 	if (sqllength > 1024) return -1;
 	strncat(strsql, tmp, len);
+
+	rc = sqlite3_exec(pdb, strsql, 0, 0, &szErrMsg);
+	if (rc != SQLITE_OK) {
+		fprintf(stderr, "can't open database: %s\n", sqlite3_errmsg(pdb));
+		return -1;
+	}
+	sqlite3_close(pdb);
+	return 0;
+}
+
+/**
+* 删除用户
+*/
+int user_del(int id) {
+	int rc = 0 ;
+	char strsql[1025];
+
+	if (id <= 0) return -1;
+	
+	if (open_db() == -1) return -1;
+
+	memset(strsql, 0, 1025);
+
+	sprintf(strsql, "DELETE FROM %s WHERE id=%d", TABLE_NAME_USER, id);
 
 	rc = sqlite3_exec(pdb, strsql, 0, 0, &szErrMsg);
 	if (rc != SQLITE_OK) {

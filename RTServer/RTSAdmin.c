@@ -63,8 +63,8 @@ void user_info(int id, char *name) {
 int main(int argc, char **argv) {
 	int n, id;
 	char name[21];
-	printf("请输入代表数字：0.建表 1.添加 2.查看全部 3.根据id查看 4.根据name查看\n");
-	printf("choose[0 - 4]:");
+	printf("请输入代表数字：\n0.建表\n1.添加\n2.查看全部\n3.根据id查看\n4.根据name查看\n5.删除\n");
+	printf("choose[0 - 5]:");
 	scanf("%d", &n);
 	switch(n) {
 		case 0:
@@ -90,6 +90,12 @@ int main(int argc, char **argv) {
 			scanf("%s", name);
 			user_info(0, name);
 			printf("查看成功\n");
+			break;
+		case 5:
+			printf("请输入id:");
+			scanf("%d", &id);
+			user_del(id);
+			printf("删除成功\n");
 			break;
 		default :
 			printf("\nerror\n");

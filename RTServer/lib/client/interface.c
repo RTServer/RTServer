@@ -221,6 +221,32 @@ int client_interface(int sockfd, int i, int maxi) {
                             }
                         }
                     }
+                } else if (strcmp(action, "register") == 0) {
+                    (json_tmp = cJSON_GetObjectItem(json, "name")) && strncpy(name, json_tmp->valuestring, MAX_NAME_LENGTH);
+                    (json_tmp = cJSON_GetObjectItem(json, "password")) && strncpy(password, json_tmp->valuestring, MAX_PASSWORD_LENGTH);
+                    if (strlen(name) == 0 || strlen(password) == 0) {
+                        RTS_send(sockfd, "{\"code\":\"0005\",\"message\":\"参数非法\"}");
+                        flag = 0;
+                    } else {
+                        flag = 1;
+                        char *salt = RTS_rand();
+                        char *pwdhash = RTS_hash(password, salt);
+                        char *datetime = RTS_current_datetime();
+                        id = user_add(name, pwdhash, salt, inet_ntoa(_client[i].addr.sin_addr), datetime, 0);
+                        free(salt); salt = NULL;
+                        free(pwdhash); pwdhash = NULL;
+                        free(datetime); datetime = NULL;
+                        if (id == 0) {
+                            RTS_send(sockfd, "{\"code\":\"1005\",\"message\":\"注册失败,该用户名已注册\"}");
+                        } else if (id > 0) {
+                            bzero(buf, MAX_BUF + 1);
+                            sprintf(buf, "{\"code\":\"0000\",\"message\":\"注册成功\",\"id\":%d}", id);
+                            RTS_send(sockfd, buf);
+                        } else {
+                            RTS_send(sockfd, "{\"code\":\"0007\",\"message\":\"注册失败,未知错误\"}");
+                            flag = 0;
+                        }
+                    }
                 } else {
                     RTS_send(sockfd, "{\"code\":\"0002\",\"message\":\"动作非法\"}");
                     flag = 0;
