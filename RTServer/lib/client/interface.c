@@ -64,7 +64,14 @@ int client_getconfd(int i) {
  * @param i [description]
  */
 void client_clean(int i) {
-	_client[i].fd = -1;
+    //如果是合法退出，则修改登录状态
+    if (strlen(_client[i].token) > 0) {
+        _RTS_USER _rts_user = user_init();
+        _rts_user.id = _client[i].id;
+        _rts_user.status = 0;
+        user_edit(_rts_user);
+    }
+    _client[i].fd = -1;
     _client[i].id = 0;
     memset(_client[i].name, 0, MAX_NAME_LENGTH + 1);
     memset(_client[i].token, 0, MAX_TOKEN_LENGTH + 1);
@@ -149,7 +156,7 @@ int client_interface(int sockfd, int i, int maxi) {
                             if (strcmp(_rts_user.password, pwdhash) == 0) {
                                 //用户名密码验证通过后，判断当前账号是否已登录
                                 //这时应该已经拿到了用户的id
-                                if (strlen(_client[i].token) != 0) { //该设备已经登录了账号，不能再做登录操作
+                                if (strlen(_client[i].token) > 0) { //该设备已经登录了账号，不能再做登录操作
                                     RTS_send(sockfd, "{\"code\":\"1004\",\"message\":\"该设备已经登录了账号，不能再做登录操作\"}");
                                 } else {
                                     int index = client_getindex(_rts_user.id, maxi);
@@ -221,6 +228,29 @@ int client_interface(int sockfd, int i, int maxi) {
                             }
                         }
                     }
+                } else if (strcmp(action, "logout") == 0) { //logout
+                    (json_tmp = cJSON_GetObjectItem(json, "token")) && strncpy(token, json_tmp->valuestring, MAX_TOKEN_LENGTH);
+                    (json_tmp = cJSON_GetObjectItem(json, "id")) && (id = json_tmp->valueint);
+                    if (strlen(token) == 0 || !id) {
+                        RTS_send(sockfd, "{\"code\":\"0005\",\"message\":\"参数非法\"}");
+                        flag = 0;
+                    } else {
+                        //认证信息失败，退出客户端
+                        if (strcmp(token, _client[i].token) != 0) {
+                            RTS_send(sockfd, "{\"code\":\"0004\",\"message\":\"token非法\"}");
+                            flag = 0;
+                        } else {
+                            //判断登录者身份：因为token是唯一的，所以只能通过客户端传过来的token判断当前登录者的身份
+                            int realid = client_getid(token, maxi);
+                            if (realid == -1 || realid != id) {
+                                RTS_send(sockfd, "{\"code\":\"0006\",\"message\":\"用户身份非法\"}");
+                                flag = 0;
+                            } else {
+                                RTS_send(sockfd, "{\"code\":\"0000\",\"message\":\"退出成功\"}");
+                                flag = 0;
+                            }
+                        }
+                    }
                 } else if (strcmp(action, "register") == 0) {
                     (json_tmp = cJSON_GetObjectItem(json, "name")) && strncpy(name, json_tmp->valuestring, MAX_NAME_LENGTH);
                     (json_tmp = cJSON_GetObjectItem(json, "password")) && strncpy(password, json_tmp->valuestring, MAX_PASSWORD_LENGTH);
@@ -256,6 +286,7 @@ int client_interface(int sockfd, int i, int maxi) {
 
         //释放内存
         cJSON_Delete(json);
+
         return flag;
     }
 
