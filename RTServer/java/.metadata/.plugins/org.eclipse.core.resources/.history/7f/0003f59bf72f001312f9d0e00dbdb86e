@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-
-    <string name="app_name">RTClinet</string>
-    <string name="title_login">登   陆</string>
-    <string name="menu_settings">Settings</string>
-
-</resources>

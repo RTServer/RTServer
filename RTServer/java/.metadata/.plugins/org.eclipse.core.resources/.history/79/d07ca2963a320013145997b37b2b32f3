@@ -1,8 +1,0 @@
-package com.csu.client;
-
-public class ServerShell {
-
-	public static void main(String[] args) {
-		
-	}
-}

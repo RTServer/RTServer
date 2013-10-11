@@ -1,7 +1,0 @@
-package com.bsh.rtclinet;
-
-import android.app.Activity;
-
-public abstract class BaseActivity extends Activity{
-
-}
