@@ -145,7 +145,7 @@ public class ChatServer {
 							for (SocketTask task : taskList) {
 								if (task != this) {
 									long userId = task.curUser.getId();
-									File img = new File("image\\"
+									File img = new File("image/"
 											+ XmlParser.queryUserById(userId)
 													.getImg());
 									FileInputStream flleInput = new FileInputStream(
@@ -157,7 +157,7 @@ public class ChatServer {
 							}
 						}
 						// 加载用户头像资源
-						File imgFile = new File("image\\" + curUser.getImg());
+						File imgFile = new File("image/" + curUser.getImg());
 						FileInputStream flleInput = new FileInputStream(imgFile);
 						byte datas[] = StreamTool.readStream(flleInput);
 						String send_person = curUser.getName(); // 发送者

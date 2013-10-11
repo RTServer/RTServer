@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<workbench progressCount="14" version="2.0">
+<workbench progressCount="11" version="2.0">
 <workbenchAdvisor/>
 <window height="728" maximized="true" width="1024" x="156" y="0">
 <fastViewData fastViewLocation="1024">
@@ -18,14 +18,14 @@
 <coolItem id="com.android.ide.eclipse.editors.CommonXmlEditor" itemType="typePlaceholder" x="-1" y="-1"/>
 <coolItem id="org.eclipse.debug.ui.launchActionSet" itemType="typeToolBarContribution" x="129" y="22"/>
 <coolItem id="org.eclipse.jdt.ui.ClassFileEditor" itemType="typePlaceholder" x="-1" y="-1"/>
-<coolItem id="org.eclipse.jdt.ui.CompilationUnitEditor" itemType="typePlaceholder" x="-1" y="-1"/>
+<coolItem id="org.eclipse.jdt.ui.CompilationUnitEditor" itemType="typeToolBarContribution" x="-1" y="-1"/>
 <coolItem id="org.eclipse.jdt.ui.JavaElementCreationActionSet" itemType="typeToolBarContribution" x="76" y="22"/>
 <coolItem id="org.eclipse.jdt.ui.PropertiesFileEditor" itemType="typePlaceholder" x="-1" y="-1"/>
 <coolItem id="org.eclipse.search.searchActionSet" itemType="typeToolBarContribution" x="76" y="22"/>
 <coolItem id="org.eclipse.ui.DefaultTextEditor" itemType="typePlaceholder" x="-1" y="-1"/>
 <coolItem id="org.eclipse.ui.edit.text.actionSet.presentation" itemType="typeToolBarContribution" x="107" y="22"/>
 <coolItem id="org.eclipse.wst.xml.ui.perspective.NewFileToolBar" itemType="typeToolBarContribution" x="-1" y="-1"/>
-<coolItem id="org.eclipse.wst.xml.ui.design.DesignToolBar" itemType="typeToolBarContribution" x="61" y="22"/>
+<coolItem id="org.eclipse.wst.xml.ui.design.DesignToolBar" itemType="typeToolBarContribution" x="-1" y="-1"/>
 <coolItem id="org.eclipse.debug.ui.launch.toolbar" itemType="typeToolBarContribution" x="-1" y="-1"/>
 <coolItem id="org.eclipse.debug.ui.main.toolbar" itemType="typeToolBarContribution" x="38" y="22"/>
 <coolItem id="group.nav" itemType="typeGroupMarker"/>
@@ -40,10 +40,21 @@
 <editorArea activeWorkbook="DefaultEditorWorkbook">
 <info part="DefaultEditorWorkbook">
 <folder appearance="1" expanded="2">
-<presentation id="org.eclipse.ui.presentations.WorkbenchPresentationFactory"/>
+<presentation id="org.eclipse.ui.presentations.WorkbenchPresentationFactory">
+<part id="0"/>
+<part id="1"/>
+</presentation>
 </folder>
 </info>
 </editorArea>
+<editor id="org.eclipse.jdt.ui.CompilationUnitEditor" name="XmlParser.java" partName="XmlParser.java" path="Z:/server/RTServer/RTServer/java/chatMessageServer/src/com/csu/tool/XmlParser.java" title="XmlParser.java" tooltip="chatMessageServer/src/com/csu/tool/XmlParser.java" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/chatMessageServer/src/com/csu/tool/XmlParser.java"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="2279" selectionTopPixel="1320"/>
+</editor>
+<editor activePart="true" focus="true" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="ChatServer.java" partName="ChatServer.java" path="Z:/server/RTServer/RTServer/java/chatMessageServer/src/com/csu/server/ChatServer.java" title="ChatServer.java" tooltip="chatMessageServer/src/com/csu/server/ChatServer.java" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/chatMessageServer/src/com/csu/server/ChatServer.java"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="5418" selectionTopPixel="2430"/>
+</editor>
 </editors>
 <views>
 <view id="com.android.ide.eclipse.ddms.views.DeviceView" partName="Devices">
@@ -70,8 +81,7 @@
 <view id="org.eclipse.ui.views.ProblemView" partName="Problems">
 <viewState PRIMARY_SORT_FIELD="org.eclipse.ui.ide.severityAndDescriptionField" categoryGroup="org.eclipse.ui.ide.severity" markerContentGenerator="org.eclipse.ui.ide.problemsGenerator" partName="Problems">
 <expanded>
-<category IMemento.internal.id="Warnings (100 of 144 items)"/>
-<category IMemento.internal.id="Errors"/>
+<category IMemento.internal.id="Warnings (100 of 142 items)"/>
 </expanded>
 <columnWidths org.eclipse.ui.ide.locationField="90" org.eclipse.ui.ide.markerType="90" org.eclipse.ui.ide.pathField="120" org.eclipse.ui.ide.resourceField="90" org.eclipse.ui.ide.severityAndDescriptionField="403"/>
 <visible IMemento.internal.id="org.eclipse.ui.ide.severityAndDescriptionField"/>
@@ -124,7 +134,7 @@
 <viewState/>
 </view>
 </views>
-<perspectives activePart="org.eclipse.jdt.ui.PackageExplorer" activePerspective="org.eclipse.jdt.ui.JavaPerspective">
+<perspectives activePart="org.eclipse.jdt.ui.CompilationUnitEditor" activePerspective="org.eclipse.jdt.ui.JavaPerspective">
 <perspective editorAreaTrimState="2" editorAreaVisible="0" fixed="0" version="0.016">
 <descriptor class="com.android.ide.eclipse.ddms.Perspective" id="com.android.ide.eclipse.ddms.Perspective" label="DDMS"/>
 <alwaysOnActionSet id="org.eclipse.ui.cheatsheets.actionSet"/>
@@ -321,7 +331,7 @@
 <presentation id="org.eclipse.ui.presentations.WorkbenchPresentationFactory"/>
 </folder>
 </info>
-<info folder="true" part="org.eclipse.ui.internal.ViewStack@61542f38" ratio="0.60257787" ratioLeft="561" ratioRight="370" relationship="4" relative="org.eclipse.ui.editorss">
+<info folder="true" part="org.eclipse.ui.internal.ViewStack@61542f38" ratio="0.8227712" ratioLeft="766" ratioRight="165" relationship="4" relative="org.eclipse.ui.editorss">
 <folder activePageID="org.eclipse.ui.console.ConsoleView" appearance="2" expanded="2">
 <page content="org.eclipse.ui.console.ConsoleView" label="Console"/>
 <page content="com.android.ide.eclipse.ddms.views.LogCatView" label="LogCat"/>
@@ -345,28 +355,10 @@
 <editor factoryID="org.eclipse.jdt.ui.ClassFileEditorInputFactory" id="org.eclipse.jdt.ui.ClassFileEditor" org.eclipse.jdt.ui.ClassFileIdentifier="=chatMessageServer/lib\/dom4j-1.6.1.jar&lt;org.dom4j(DocumentException.class"/>
 <editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.ui.DefaultTextEditor" path="/chatMessageServer/MANIFEST.MF"/>
 <editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.ui.DefaultTextEditor" path="/chatMessageServer/META-INF/MANIFEST.MF"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" path="/chatMessageServer/src/com/csu/bean/Message.java"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" path="/chatMessageServer/src/com/csu/tool/XmlParser.java"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" path="/chatMessageServer/src/com/csu/server/ChatServer.java"/>
 </editors>
-<item historyLabel="ServerShell.java" index="2">
-<position/>
-</item>
-<item historyLabel="ServerWindow.java" index="1">
-<position info="not_deleted" x="969" y="0"/>
-</item>
-<item historyLabel="ServerShell.java" index="2">
-<position/>
-</item>
-<item historyLabel="ServerWindow.java" index="1">
-<position info="not_deleted" x="969" y="0"/>
-</item>
-<item historyLabel="ServerShell.java" index="2">
-<position/>
-</item>
-<item historyLabel="ServerShell.java" index="2">
-<position/>
-</item>
-<item historyLabel="ServerWindow.java" index="1">
-<position info="not_deleted" x="969" y="0"/>
-</item>
 <item historyLabel="ServerWindow.java" index="1">
 <position info="not_deleted" x="925" y="0"/>
 </item>
@@ -493,8 +485,29 @@
 <item historyLabel="MANIFEST.MF" index="6">
 <position info="not_deleted" x="293" y="0"/>
 </item>
-<item active="true" historyLabel="ServerShell.java" index="2">
+<item historyLabel="ServerShell.java" index="2">
 <position info="not_deleted" x="603" y="0"/>
+</item>
+<item historyLabel="Message.java" index="7">
+<position info="not_deleted" x="705" y="0"/>
+</item>
+<item historyLabel="XmlParser.java" index="8">
+<position info="not_deleted" x="805" y="0"/>
+</item>
+<item historyLabel="ChatServer.java" index="9">
+<position info="not_deleted" x="1022" y="0"/>
+</item>
+<item historyLabel="XmlParser.java" index="8">
+<position info="not_deleted" x="2802" y="0"/>
+</item>
+<item historyLabel="ChatServer.java" index="9">
+<position info="not_deleted" x="3930" y="0"/>
+</item>
+<item historyLabel="XmlParser.java" index="8">
+<position info="not_deleted" x="2279" y="0"/>
+</item>
+<item active="true" historyLabel="ChatServer.java" index="9">
+<position info="not_deleted" x="3930" y="0"/>
 </item>
 </navigationHistory>
 <input factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/" type="8"/>
@@ -502,9 +515,6 @@
 <workbenchWindowAdvisor/>
 <actionBarAdvisor/>
 <trimLayout>
-<trimArea IMemento.internal.id="16384">
-<trimItem IMemento.internal.id="left"/>
-</trimArea>
 <trimArea IMemento.internal.id="131072">
 <trimItem IMemento.internal.id="right"/>
 </trimArea>
@@ -517,11 +527,19 @@
 <trimItem IMemento.internal.id="org.eclipse.ui.internal.HeapStatus"/>
 <trimItem IMemento.internal.id="org.eclipse.ui.internal.progress.ProgressRegion"/>
 <trimItem IMemento.internal.id="bottom"/>
-<trimItem IMemento.internal.id="org.eclipse.ui.internal.ViewStack@61542f38"/>
 </trimArea>
 </trimLayout>
 </window>
 <mruList>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="ChatServer.java" tooltip="chatMessageServer/src/com/csu/server/ChatServer.java">
+<persistable path="/chatMessageServer/src/com/csu/server/ChatServer.java"/>
+</file>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="XmlParser.java" tooltip="chatMessageServer/src/com/csu/tool/XmlParser.java">
+<persistable path="/chatMessageServer/src/com/csu/tool/XmlParser.java"/>
+</file>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="Message.java" tooltip="chatMessageServer/src/com/csu/bean/Message.java">
+<persistable path="/chatMessageServer/src/com/csu/bean/Message.java"/>
+</file>
 <file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.ui.DefaultTextEditor" name="MANIFEST.MF" tooltip="chatMessageServer/META-INF/MANIFEST.MF">
 <persistable path="/chatMessageServer/META-INF/MANIFEST.MF"/>
 </file>
@@ -555,17 +573,8 @@
 <file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="ContentFlag.java" tooltip="chatMessageServer/src/com/csu/constant/ContentFlag.java">
 <persistable path="/chatMessageServer/src/com/csu/constant/ContentFlag.java"/>
 </file>
-<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="XmlParser.java" tooltip="chatMessageServer/src/com/csu/tool/XmlParser.java">
-<persistable path="/chatMessageServer/src/com/csu/tool/XmlParser.java"/>
-</file>
 <file factoryID="org.eclipse.jdt.ui.ClassFileEditorInputFactory" id="org.eclipse.jdt.ui.ClassFileEditor" name="Runtime.class" tooltip="java.lang.Runtime">
 <persistable org.eclipse.jdt.ui.ClassFileIdentifier="=chatMessageServer/C:\/Program Files\/Java\/jre7\/lib\/rt.jar&lt;java.lang(Runtime.class"/>
-</file>
-<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="ChatServer.java" tooltip="chatMessageServer/src/com/csu/server/ChatServer.java">
-<persistable path="/chatMessageServer/src/com/csu/server/ChatServer.java"/>
-</file>
-<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="ServerWindow.java" tooltip="chatMessageServer/src/com/csu/client/ServerWindow.java">
-<persistable path="/chatMessageServer/src/com/csu/client/ServerWindow.java"/>
 </file>
 </mruList>
 </workbench>
