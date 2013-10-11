@@ -34,14 +34,14 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:gravity="center"
-            android:text="By：徐鹰"
+            android:text="By：毕胜华"
             android:textColor="#000"
             android:textSize="30dp" />
 		<TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:padding="6dp"
-            android:text="QQ:961163744"
+            android:text="QQ:569046840"
             android:textSize="14sp"
             android:textColor="#444" />
         <Button
