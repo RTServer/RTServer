@@ -1,0 +1,5 @@
+package com.csu.client;
+
+public class ServerShell {
+
+}

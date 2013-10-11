@@ -1,0 +1,16 @@
+package com.bsh.test;
+
+public class Test {
+	
+	public static void main(String[] args) {
+		final String USERID = "bsh";
+		final String PWD = "123";
+		Api.login(USERID, PWD);
+		try {
+			while (true) {
+			    char c = (char) System.in.read();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+}

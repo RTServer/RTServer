@@ -1,0 +1,62 @@
+package com.bsh.test;
+
+import java.net.*;
+import java.nio.channels.*;
+import java.util.*;
+import java.io.*;
+
+public class NIOSocket {
+	private static final int CLINET_PORT = 10200;
+	private static final int SEVER_PORT = 10201;
+	// 面向流的连接套接字的可选择通道
+	private SocketChannel ch;
+	// 通道选择器
+	private Selector sel;
+
+	public static void main(String[] args) throws IOException{
+		//打开套接字通道
+		ch = SocketChannel.open();
+		//打开一个选择器
+		sel = Selector.open();	
+		try{
+			//获取与套接字通道关联的套接字，并将该套接字绑定到本机指定端口
+				ch.socket().bind(new InetSocketAddress(CLINET_PORT));
+				//调整此通道为非阻塞模式
+				ch.configureBlocking(false);
+				//为通道选择器注册通道，并指定操作的选择键集
+				ch.register(sel, SelectionKey.OP_READ | SelectionKey.OP_WRITE |
+		 SelectionKey.OP_CONNECT);
+					//选择通道上注册的事件，其相应通道已为I/O操作准备就绪
+					sel.select();
+					//返回选择器的已选择键集
+					Iterator it = sel.selectedKeys().iterator();
+					while(it.hasNext()){
+						//获取通道的选择器的键
+			SelectionKey key = (SelectionKey)it.next();
+			it.remove();
+			//如果该通道已经准备好套接字连接
+			if(key.isConnectable()){
+			InetAddress addr = InetAddress.getLocalHost();
+			System.out.println(“Connect will not block”);
+		//调用此方法发起一个非阻塞的连接操作，如果立即建立连接，则此方法//返回true.否则返回false,且必须在以后使用finishConnect()完成连接操作
+		//此处建立和服务端的Socket连接
+			if(!ch.connect(new InetSocketAddress(addr, SEVER_PORT))){
+				//完成非立即连接操作
+			ch.finishConnect();
+		}
+	}
+//此通道已准备好进行读取
+if(key.isReadable()){
+	System.out.println(“Read will not block”);
+}
+//此通道已准备好进行写入
+if(key.isWritable()){
+	System.out.println(“Write will not block”);
+}
+}
+} finally{
+ch.close();
+sel.close();	
+}
+}
+}

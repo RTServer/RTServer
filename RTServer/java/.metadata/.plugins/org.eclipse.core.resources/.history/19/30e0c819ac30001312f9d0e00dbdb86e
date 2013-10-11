@@ -1,0 +1,12 @@
+package com.bsh.test;
+
+import com.bsh.rtclient.util.Api;
+
+public class Test {
+	
+	public static void main(String[] args) {
+		final String USERID = "bsh";
+		final String PWD = "123";
+		Api.login(USERID, PWD)
+	}
+}

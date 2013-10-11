@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">RTClinet</string>
+    <string name="title_login">登   录</string>
+   <string name="title_username">用户名</string>
+    <string name="title_passsword">密码</string>
+    <string name="title_register">注册</string>
+    <string name="menu_settings">Settings</string>
+
+</resources>

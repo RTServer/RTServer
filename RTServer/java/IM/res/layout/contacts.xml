@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+   xmlns:android="http://schemas.android.com/apk/res/android" 
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+    	
+    <EditText android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/sendAddressET"
+        android:hint="联系人地址"
+        android:text="super"
+        />
+    <EditText 
+        android:id="@+id/sendcontentET"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:singleLine="false"
+        android:hint="消息内容"
+       
+        />
+    <ScrollView 
+         android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        >
+     <TextView 
+        android:id="@+id/getmsgET"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:singleLine="false"
+        />
+     </ScrollView>
+    <Button 
+         android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="send"
+        android:onClick="send"
+        />
+    
+    	<ExpandableListView 
+    	    android:layout_width="fill_parent"
+    	    android:layout_height="fill_parent"
+    	    android:id="@+id/epdLV"
+    	    ></ExpandableListView>
+
+</LinearLayout>

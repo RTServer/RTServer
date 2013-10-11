@@ -1,0 +1,22 @@
+package com.csu.client;
+
+import java.util.Scanner;
+
+import com.csu.server.ChatServer;
+
+public class ServerShell {
+	
+	public static void main(String[] args) {
+		Scanner input = new Scanner(System.in);
+		System.out.println("请输入端口号");
+		int port = input.nextInt();
+		try {
+			ChatServer server = new ChatServer(port);
+			server.start();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println("服务器已启动");
+		
+	}
+}

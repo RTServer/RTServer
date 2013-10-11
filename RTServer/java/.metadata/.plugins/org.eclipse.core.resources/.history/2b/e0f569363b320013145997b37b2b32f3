@@ -1,0 +1,10 @@
+package com.csu.client;
+
+import com.csu.server.ChatServer;
+
+public class ServerShell {
+	
+	public static void main(String[] args) {
+		ChatServer server = new ChatServer(222);
+	}
+}

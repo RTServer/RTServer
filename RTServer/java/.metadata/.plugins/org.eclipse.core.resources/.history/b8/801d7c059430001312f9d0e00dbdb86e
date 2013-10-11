@@ -1,0 +1,19 @@
+package com.bsh.rtclient.util;
+
+public class Api {
+	private static String token = "";
+
+	public static String login(final String name, final String password) {
+		Service.getConnection();
+		return Service.sendData("{\"action\":\"login\",\"name\":\"" + name + "\",\"password\":\"" + password + "\"}");
+	}
+	
+	public static void logout() {
+		Service.closeConnection();
+	}
+	
+	public static String getToken() {
+		return "abc";
+	}
+	
+}
