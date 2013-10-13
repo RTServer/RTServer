@@ -19,7 +19,7 @@
     </application>
     <uses-sdk
         android:minSdkVersion="8"
-        android:targetSdkVersion="17" />
+        android:targetSdkVersion="18" />
     <instrumentation android:targetPackage="com.csu.chatroom" android:name="android.test.InstrumentationTestRunner" />
 <!-- 在SDCard中创建与删除文件权限 -->
 <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"/>
