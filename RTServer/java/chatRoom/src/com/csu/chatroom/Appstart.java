@@ -14,13 +14,13 @@ public class Appstart extends Activity{
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.appstart);
 		
-	new Handler().postDelayed(new Runnable(){
-		@Override
-		public void run(){
-			Intent intent = new Intent (Appstart.this,WelcomeActivity.class);			
-			startActivity(intent);			
-			Appstart.this.finish();
-		}
-	}, 2000);
+		new Handler().postDelayed(new Runnable(){
+			@Override
+			public void run(){
+				Intent intent = new Intent (Appstart.this,WelcomeActivity.class);			
+				startActivity(intent);			
+				Appstart.this.finish();
+			}
+		}, 2000);
    }
 }

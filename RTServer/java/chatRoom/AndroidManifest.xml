@@ -12,7 +12,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="WelcomeActivity"></activity>
+        <activity android:name=".WelcomeActivity"></activity>
         <activity android:name=".ChatActivity"  android:windowSoftInputMode="stateHidden" android:configChanges="orientation|keyboardHidden|navigation"></activity>
 		 <activity android:name=".UserLoginActivity" android:theme="@style/myTheme"></activity>
 		 <activity android:name=".UserRegisActivity" android:theme="@style/myTheme"></activity>

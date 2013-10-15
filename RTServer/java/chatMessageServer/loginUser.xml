@@ -1,8 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<users>
-  <user id="1000">
-    <name>bsh</name>
-    <image>1381460662464.png</image>
+<users> 
+  <user id="1000"> 
+    <name>bsh</name>  
+    <image>1381460662464.png</image> 
+  </user>  
+  <user id="1001"> 
+    <name>bsh</name>  
+    <image>1381846199823.png</image> 
+  </user>  
+  <user id="1002">
+    <name>lbq</name>
+    <image>1381846398197.png</image>
   </user>
 </users>
