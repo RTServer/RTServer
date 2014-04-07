@@ -3,10 +3,9 @@
 #include <string.h>
 #include <sys/time.h>  
 #include <time.h>
+#include <sys/socket.h>
 #include "../md5/md5.h"
 #include "base.h"
-
-int gettimeofday(struct timeval *tv, struct timezone *tz);
 
 char *RTS_current_datetime() {
     char *timestr = (char *)malloc(20 * sizeof(char));
@@ -29,7 +28,7 @@ char *RTS_unique() {
     MD5Init(&md5);         
     int i;
     unsigned char decrypt[16];    
-    MD5Update(&md5, timestr, strlen((char *)timestr));
+    MD5Update(&md5, (unsigned char *)timestr, strlen((char *)timestr));
     MD5Final(&md5, decrypt);
     for(i = 0; i < 16; i++) {
         char tmp[3] = {0};
@@ -45,7 +44,7 @@ char *RTS_md5(char *str) {
     MD5Init(&md5);         
     int i;
     unsigned char decrypt[16];    
-    MD5Update(&md5, str, strlen((char *)str));
+    MD5Update(&md5, (unsigned char *)str, strlen((char *)str));
     MD5Final(&md5, decrypt);
     for(i = 0; i < 16; i++) {
         char tmp[3] = {0};
@@ -80,6 +79,6 @@ char *RTS_hash(char *password, char *salt) {
     return RTS_md5(saltpwd);
 }
 
-void RTS_send(int sockfd, const char *content) {
-    send(sockfd, content, strlen(content), 0);
+int RTS_send(int sockfd, const char *content) {
+    return send(sockfd, content, strlen(content), 0);
 }

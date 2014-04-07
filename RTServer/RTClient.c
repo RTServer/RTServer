@@ -5,7 +5,6 @@ gcc -o RTClient RTClient.c -lpthread
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <resolv.h>
 #include <stdlib.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>

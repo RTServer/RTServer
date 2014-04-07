@@ -179,11 +179,11 @@ _RTS_USER user_get(int id, char *name) {
 			for(i = 0; i < nColumn; i++) {
 				const char *colum_name = sqlite3_column_name(stmt, i);
 				(strcmp(colum_name, "id") == 0) && (_rts_user.id = sqlite3_column_int(stmt, i));
-				(strcmp(colum_name, "name") == 0) && strcpy(_rts_user.name, sqlite3_column_text(stmt, i));
-				(strcmp(colum_name, "password") == 0) && strcpy(_rts_user.password, sqlite3_column_text(stmt, i));
-				(strcmp(colum_name, "salt") == 0) && strcpy(_rts_user.salt, sqlite3_column_text(stmt, i));
-				(strcmp(colum_name, "ip") == 0) && strcpy(_rts_user.ip, sqlite3_column_text(stmt, i));
-				(strcmp(colum_name, "datetime") == 0) && strcpy(_rts_user.datetime, sqlite3_column_text(stmt, i));
+				(strcmp(colum_name, "name") == 0) && strcpy(_rts_user.name, (char *)sqlite3_column_text(stmt, i));
+				(strcmp(colum_name, "password") == 0) && strcpy(_rts_user.password, (char *)sqlite3_column_text(stmt, i));
+				(strcmp(colum_name, "salt") == 0) && strcpy(_rts_user.salt, (char *)sqlite3_column_text(stmt, i));
+				(strcmp(colum_name, "ip") == 0) && strcpy(_rts_user.ip, (char *)sqlite3_column_text(stmt, i));
+				(strcmp(colum_name, "datetime") == 0) && strcpy(_rts_user.datetime, (char *)sqlite3_column_text(stmt, i));
 				(strcmp(colum_name, "status") == 0) && (_rts_user.status = sqlite3_column_int(stmt, i));
 			}
 		} else if (rc == SQLITE_DONE) {

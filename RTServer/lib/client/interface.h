@@ -1,10 +1,4 @@
-#define MAX_CLIENT 1024
-#define MAX_BUF 10240
-#define MAX_NAME_LENGTH 20
-#define MAX_TOKEN_LENGTH 32
-#define MAX_CONTENT_LENGTH 1024
-#define MAX_ACTION_LENGTH 15
-#define MAX_PASSWORD_LENGTH 32
+#include "const.h"
 
 //定义接入客户端数据结构
 typedef struct _CLIENT {
