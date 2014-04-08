@@ -1,9 +1,8 @@
 #include <stdio.h>
-#include "stdlib.h"
+#include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>  
 #include <time.h>
-#include <sys/socket.h>
 #include "../md5/md5.h"
 #include "base.h"
 
@@ -77,8 +76,4 @@ char *RTS_hash(char *password, char *salt) {
     free(md5str);
     md5str = NULL;
     return RTS_md5(saltpwd);
-}
-
-int RTS_send(int sockfd, const char *content) {
-    return send(sockfd, content, strlen(content), 0);
 }

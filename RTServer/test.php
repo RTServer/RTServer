@@ -41,3 +41,12 @@ $json = array(
 
 echo json_encode($json);
 echo "\n\n";
+
+$json = array(
+		'action' => 'register',
+		'name' => 'test2',
+		'password' => '123456',
+);
+
+echo json_encode($json);
+echo "\n\n";

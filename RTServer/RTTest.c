@@ -1,32 +1,37 @@
 /**
- * gcc -o RTTest RTTest.c lib/json/cJSON.c -lpthread
+ * gcc -o RTTest RTTest.c lib/client/transport.c lib/json/cJSON.c -lpthread
  */
 
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <sys/socket.h>
-#include <resolv.h>
 #include <stdlib.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <sys/time.h>
-#include <sys/types.h>
 #include <pthread.h>
-#include "lib/json/cJSON.h"
-#include "lib/client/const.h"
+#include "lib/client/transport.h"
+
 
 #define MAXBUF 10240
 
 char *_IP = "127.0.0.1";
 int _PORT = 5566;
 
+//定义用户数据结构
+typedef struct _USER {
+    int id;
+    char token[MAX_TOKEN_LENGTH + 1];
+}_USER;
+
 //for mulThread
 //多线程传递参数为结构体类型
 typedef struct ARG {
     int n;
+    _USER *_user;
 }ARG;
+
+int total = 0;
 
 void *talk_to_server(void *arg) {
     int sockfd, len;
@@ -63,9 +68,8 @@ void *talk_to_server(void *arg) {
 
     //向服务器发送一次数据，触发下面的接收事件
     bzero(buf, MAXBUF + 1);
-    const char *str = "{\"action\":\"login\",\"name\":\"test1\",\"password\":\"123456\",\"id\":1}";
-    sprintf(buf, str, sockfd, info->n);
-    len = send(sockfd, buf, strlen(buf), 0);
+    sprintf(buf, "{\"action\":\"login\",\"name\":\"test%d\",\"password\":\"123456\"}", info->n);
+    len = RTS_send(sockfd, buf);
     if(len > 0)
         printf("%d-发送成功\n", sockfd);
     else {
@@ -90,6 +94,8 @@ void *talk_to_server(void *arg) {
 
         //printf("%d---%d\n", retval, sockfd);
 
+        
+
         if (retval == -1) {
             printf("select error! %s", strerror(errno));              
             break;
@@ -103,17 +109,33 @@ void *talk_to_server(void *arg) {
                 if(len > 0) {
                     printf("%d-接收数据:%s\n", sockfd, buf);
 
-                    cJSON *json = NULL, *json_tmp = NULL;;
-        			json = cJSON_Parse(buf);
+                    if (info->_user->id == 0) {
+                        _RTS_TRANSPORT_DATA _rts_transport_data;
+                        _rts_transport_data = RTS_transport_data_init();
+                        if (RTS_transport_data_parse(buf, &_rts_transport_data) == 0) {
+                            RTS_send(sockfd, "{\"code\":\"0001\",\"message\":\"数据格式非法\"}");
+                        }
+                        info->_user->id = _rts_transport_data.id;
+                        strncpy(info->_user->token, _rts_transport_data.token, MAX_TOKEN_LENGTH);
+                    }
+
+                    //批量注册
+                    /*bzero(buf, MAXBUF + 1);
+                    int ii;
+                    for (ii = 0; ii < 1000000; ii++) {
+                        sprintf(buf, "{\"action\":\"register\",\"name\":\"test%d\",\"password\":\"123456\"}", ii);
+                        RTS_send(sockfd, buf);
+                        printf("发送成功-data:%s\n", buf);
+                    }*/
 
                     //接收到数据就再发，sleep 1秒
                     sleep(1);
                     bzero(buf, MAXBUF + 1);
-                    const char *str = "{\"action\":\"message\",\"token\":\"abcdefg\",\"toid\":2,\"id\":1,\"content\":\"test2\"}";
-                    sprintf(buf, str, sockfd, info->n);
-                    len = send(sockfd, buf, strlen(buf), 0);
+                    int toid = rand() / (RAND_MAX / total + 1) + 1; //随机发送
+                    sprintf(buf, "{\"action\":\"message\",\"token\":\"%s\",\"toid\":%d,\"id\":%d,\"content\":\"send to %d\"}", info->_user->token, toid, info->_user->id, toid);
+                    len = RTS_send(sockfd, buf);
                     if(len > 0)
-                        printf("%d-发送成功\n", sockfd);
+                        printf("%d-发送成功-data:%s\n", sockfd, buf);
                     else {
                         printf("%d-发送失败\n", sockfd);
                         break;
@@ -152,11 +174,17 @@ int main(int argc, char **argv) {
     pthread_attr_setdetachstate(&child_thread_attr, PTHREAD_CREATE_DETACHED);
 
     int i, n = atoi(argv[3]), ret;
+    total = n;
     for(i = 0; i < n; i++) {
+        _USER _user;
+        _user.id = 0;
+        memset(_user.token, 0, MAX_TOKEN_LENGTH + 1);
+
         //采用多线程并发3，新线程传递参数变量用指针
         ARG *arg;
         arg = (ARG *)malloc(sizeof(ARG));
         arg->n = i;
+        arg->_user = &_user;
         ret = pthread_create(&child_thread, &child_thread_attr, talk_to_server, (void *)arg);
         //当创建线程成功时，函数返回0，若不为0则说明创建线程失败，常见的错误返回代码为EAGAIN和EINVAL。
         //前者表示系统限制创建新的线程，例如线程数目过多了；后者表示第二个参数代表的线程属性值非法。
