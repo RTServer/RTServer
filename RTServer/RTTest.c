@@ -93,9 +93,6 @@ void *talk_to_server(void *arg) {
         retval = select(maxfd + 1, &rfds, NULL, NULL, &tv);
 
         //printf("%d---%d\n", retval, sockfd);
-
-        
-
         if (retval == -1) {
             printf("select error! %s", strerror(errno));              
             break;
@@ -119,21 +116,117 @@ void *talk_to_server(void *arg) {
                         strncpy(info->_user->token, _rts_transport_data.token, MAX_TOKEN_LENGTH);
                     }
 
-                    //批量注册
-                    /*bzero(buf, MAXBUF + 1);
-                    int ii;
-                    for (ii = 0; ii < 1000000; ii++) {
-                        sprintf(buf, "{\"action\":\"register\",\"name\":\"test%d\",\"password\":\"123456\"}", ii);
-                        RTS_send(sockfd, buf);
-                        printf("发送成功-data:%s\n", buf);
-                    }*/
-
                     //接收到数据就再发，sleep 1秒
                     sleep(1);
                     bzero(buf, MAXBUF + 1);
                     int toid = rand() / (RAND_MAX / total + 1) + 1; //随机发送
                     sprintf(buf, "{\"action\":\"message\",\"token\":\"%s\",\"toid\":%d,\"id\":%d,\"content\":\"send to %d\"}", info->_user->token, toid, info->_user->id, toid);
                     len = RTS_send(sockfd, buf);
+                    if(len > 0)
+                        printf("%d-发送成功-data:%s\n", sockfd, buf);
+                    else {
+                        printf("%d-发送失败\n", sockfd);
+                        break;
+                    }
+                }else {
+                    if(len < 0) 
+                        printf("%d-接收失败 错误号:%d，错误信息: '%s'\n", sockfd, errno, strerror(errno));
+                    else
+                        printf("%d-退出连接\n", sockfd);
+                    break;
+                }
+            }                
+        }
+    }
+
+    close(sockfd);
+
+    return NULL;
+}
+
+//批量添加用户
+int create_num = 20;
+int create_total_num = 100000;
+void *create_test_user(void *arg) {
+    int sockfd, len;
+    struct sockaddr_in dest;
+    char buf[MAXBUF + 1];
+    fd_set rfds;
+    struct timeval tv;
+    int retval, maxfd = -1;
+    int port = 5222;
+
+    if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+        perror("Socket");
+        exit(errno);
+    }
+
+    bzero(&dest, sizeof(dest));
+    dest.sin_family = AF_INET;
+    dest.sin_port = htons(_PORT);
+    if(inet_aton(_IP, (struct in_addr *)&dest.sin_addr.s_addr) == 0) {
+        perror(_IP);
+        exit(errno);
+    }
+
+    if(connect(sockfd, (struct sockaddr *) &dest, sizeof(dest)) != 0) {
+        perror("Connect error");
+        close(sockfd);
+        return NULL;
+        //exit(errno);
+    }
+
+    printf("等待连接和数据...\n");
+
+    //向服务器发送一次数据，触发下面的接收事件
+    bzero(buf, MAXBUF + 1);
+    sprintf(buf, "{\"action\":\"login\",\"name\":\"test0\",\"password\":\"123456\"}");
+    len = RTS_send(sockfd, buf);
+    if(len > 0)
+        printf("%d-发送成功\n", sockfd);
+    else {
+        printf("%d-发送失败\n", sockfd);
+        close(sockfd);
+        return NULL;
+    }
+    while (1) {
+        //printf("okok%d\n", ++i);
+
+        FD_ZERO(&rfds);
+        maxfd = 0;
+
+        FD_SET(sockfd, &rfds);
+        if(sockfd > maxfd)
+            maxfd = sockfd;
+
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
+
+        retval = select(maxfd + 1, &rfds, NULL, NULL, &tv);
+
+        //printf("%d---%d\n", retval, sockfd);
+        if (retval == -1) {
+            printf("select error! %s", strerror(errno));              
+            break;
+        } else if (retval == 0) {
+            //printf("no msg,no key, and continue to wait……\n");
+            continue;
+        } else {
+            if (FD_ISSET(sockfd, &rfds)) { 
+                bzero(buf, MAXBUF + 1);
+                len = recv(sockfd, buf, MAXBUF, 0);
+                if(len > 0) {
+                    printf("%d-接收数据:%s\n", sockfd, buf);
+                    if (create_num >= create_total_num) {
+                        close(sockfd);
+                        return NULL;
+                    }
+
+                    bzero(buf, MAXBUF + 1);
+                    sprintf(buf, "{\"action\":\"register\",\"name\":\"test%d\",\"password\":\"123456\"}", create_num);
+                    len = RTS_send(sockfd, buf);
+                    printf("发送成功-data:%s\n", buf);
+                    create_num++;
                     if(len > 0)
                         printf("%d-发送成功-data:%s\n", sockfd, buf);
                     else {
@@ -176,21 +269,25 @@ int main(int argc, char **argv) {
     int i, n = atoi(argv[3]), ret;
     total = n;
     for(i = 0; i < n; i++) {
-        _USER _user;
-        _user.id = 0;
-        memset(_user.token, 0, MAX_TOKEN_LENGTH + 1);
+        _USER *_user = (_USER *)malloc(sizeof(_USER));
+        _user->id = 0;
+        memset(_user->token, 0, MAX_TOKEN_LENGTH + 1);
 
         //采用多线程并发3，新线程传递参数变量用指针
         ARG *arg;
         arg = (ARG *)malloc(sizeof(ARG));
         arg->n = i;
-        arg->_user = &_user;
+        arg->_user = _user;
         ret = pthread_create(&child_thread, &child_thread_attr, talk_to_server, (void *)arg);
         //当创建线程成功时，函数返回0，若不为0则说明创建线程失败，常见的错误返回代码为EAGAIN和EINVAL。
         //前者表示系统限制创建新的线程，例如线程数目过多了；后者表示第二个参数代表的线程属性值非法。
         if(ret != 0)
             printf("pthread_create Failed : %s\n", strerror(errno));
     }
+
+    //批量添加用户
+    //pthread_create(&child_thread, &child_thread_attr, create_test_user, NULL);
+
     //pthread_join(child_thread, NULL);
     getchar();
     return 0;
