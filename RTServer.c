@@ -1,5 +1,5 @@
 /**
-gcc -o RTServer RTServer.c clientctrl.h clientctrl.c parsexml.h parsexml.c -lpthread `xml2-config --cflags --libs`
+gcc -o RTServer RTServer.c lib/client/interface.c lib/client/transport.c lib/tools/base.c lib/db/data.c lib/json/cJSON.c lib/md5/md5.c -lm -lsqlite3
 
 服务器的TCP状态(连接状态数量统计)
 netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'
@@ -29,12 +29,12 @@ TCP6: inuse 3UDP6: inuse 0RAW6: inuse 0 FRAG6: inuse 0 memory 0
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <string.h>
 #include <netinet/in.h>
 #include <locale.h>
-
-#include "clientctrl.h"
+#include <sys/select.h>
+#include <unistd.h>
+#include "lib/client/interface.h"
 
 #define MAX_LENGTH 1024 //最大监听数
 
@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
     if(argv[1]) 
         myport = atoi(argv[1]); //将字符串转换成整形
     else
-        myport = 5222;
+        myport = 5566;
 
     //创建用于internet的流协议(TCP)socket,用slisten代表服务器socket
     if((slisten = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
     FD_SET(slisten, &allset);  
     maxfd = slisten;
     
-    printf("Socket:%d-等待连接和数据...\n", slisten);
+    printf("RTServer成功运行...\n");
     while(1) {
         rset = allset;            
 
@@ -144,12 +144,13 @@ int main(int argc, char **argv) {
                     if((sockfd = client_getconfd(i)) == -1)
                         continue;
                     if(FD_ISSET(sockfd, &rset)) { //接收客户端信息
-                        if (!client_interface(sockfd, i)) {
-                            printf("客户端退出了\n");
+                        if (!client_interface(sockfd, i, maxi)) {
+                            client_clean(i);
                             close(sockfd);
                             FD_CLR(sockfd, &allset);
-                            client_clean(i);
+                            printf("客户端{index:%d}退出了\n", i);
                         }
+                        client_print(maxi);
                     }
                 }
             }

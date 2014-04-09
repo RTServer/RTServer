@@ -1,19 +1,10 @@
 /**
 gcc -o RTClient RTClient.c -lpthread
-
-可以用jabbercn.org(113.105.65.227)这个公共服务测试
-./RTClient 113.105.65.227 5222
-C:<stream:stream to="jabbercn.org" xmlns="jabber:client" xmlns:stream="http://etherx.jabber.org/streams" version="1.0">
-S:<?xml version='1.0'?><stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' id='78329114' from='jabbercn.org' version='1.0' xml:lang='en'><stream:features><starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/><mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'><mechanism>PLAIN</mechanism></mechanisms><c xmlns='http://jabber.org/protocol/caps' hash='sha-1' node='http://www.process-one.net/en/ejabberd/' ver='k87lIPU+P82FgFI2M+F2/LglysI='/><register xmlns='http://jabber.org/features/iq-register'/></stream:features>
-
-C:<starttls xmlns="urn:ietf:params:xml:ns:xmpp-tls"/>
-S:<proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
 */
 
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <resolv.h>
 #include <stdlib.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -58,7 +49,7 @@ int main(int argc, char **argv) {
         exit(errno);
     }
 
-    printf("等待连接和数据...\n");
+    printf("RTClient成功运行...\n");
     while (1) {
 
         FD_ZERO(&rfds);
