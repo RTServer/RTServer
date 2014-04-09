@@ -50,6 +50,7 @@ RTServer
 
 
 二、接下来要做：
+
 	1）android客户端
 	2）IOS客户端
 	3）优化服务端，可能考虑采用epoll的网络模型，现在是select非阻塞方式
@@ -57,6 +58,7 @@ RTServer
 
 
 三、GIT相关操作
+
 cmd:
 mkdir RTServer
 cd RTServer
@@ -78,3 +80,4 @@ $ssh-keygen -t rsa -C net.bsh@gmail.com
 连续敲三次回车
 2.$cat ~/.ssh/id_rsa.pub
 将里面的内容添加到服务器上：https://github.com/settings/ssh
+
