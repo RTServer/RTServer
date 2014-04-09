@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+    	<TextView 
+    	      android:id="@+id/conferenceRosterTV"
+    	    android:layout_width="fill_parent"
+    	    android:layout_height="wrap_content"
+    	    />
+    	<EditText 
+    	    android:id="@+id/conferenceET"
+    	    android:layout_width="fill_parent"
+    	    android:layout_height="wrap_content"
+    	    android:hint="请输入聊天内容"
+    	    android:singleLine="false"
+    	    />
+    	<Button 
+    	     android:layout_width="fill_parent"
+    	    android:layout_height="wrap_content"
+    	    android:text="发送消息"
+    	    android:onClick="send"
+    	    />
+    	<ScrollView android:layout_width="fill_parent"
+    	    android:layout_height="fill_parent">
+		<TextView 
+		      android:id="@+id/conferenceContentTV"
+    	    android:layout_width="fill_parent"
+    	    android:layout_height="wrap_content"
+		    />	
+		    </ScrollView>
+</LinearLayout>

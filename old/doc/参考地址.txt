@@ -1,0 +1,9 @@
+XMPP协议：
+http://wiki.jabbercn.org/RFC3920
+http://wiki.jabbercn.org/RFC6120
+
+XMPP公共服务：
+http://wiki.jabbercn.org/XMPP%E5%85%AC%E5%85%B1%E6%9C%8D%E5%8A%A1
+
+XML处理：
+www.xmlsoft.org/examples/index.html
