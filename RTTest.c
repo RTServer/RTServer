@@ -121,6 +121,7 @@ void *talk_to_server(void *arg) {
                     bzero(buf, MAXBUF + 1);
                     int toid = rand() / (RAND_MAX / total + 1) + 1; //随机发送
                     sprintf(buf, "{\"action\":\"message\",\"token\":\"%s\",\"toid\":%d,\"id\":%d,\"content\":\"send to %d\"}", info->_user->token, toid, info->_user->id, toid);
+                    //sprintf(buf, "{\"action\":\"message\",\"token\":\"%s\",\"toid\":11,\"id\":23,\"content\":\"send to 11\"}", "bsh_test_$%1KP@'");
                     len = RTS_send(sockfd, buf);
                     if(len > 0)
                         printf("%d-发送成功-data:%s\n", sockfd, buf);
