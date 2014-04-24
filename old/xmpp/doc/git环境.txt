@@ -1,0 +1,29 @@
+1.HOSTS：
+207.97.227.239  github.com
+65.74.177.129   www.github.com
+207.97.227.252  nodeload.github.com
+207.97.227.243  raw.github.com
+204.232.175.78  documentcloud.github.com
+204.232.175.78  pages.github.com
+23.0.165.8		a248.e.akamai.net
+
+2.设置权限：
+ssh-keygen -t rsa -C net.bsh@gmail.com				#改成自己的
+连续敲三次回车										#不要输入任何字符
+cat ~/ .ssh/id_rsa.pub								#把输出内容发我
+
+3.获取代码：
+mkdir RTServer
+cd RTServer
+git init
+git config --global user.email net.bsh@gmail.com	#改成自己的
+git config --global user.name bishenghua			#改成自己的
+git config --global core.editor vim
+git config --global remote.origin.url git@github.com:RTServer/RTServer.git
+git pull -f origin									#此操作会获取代码
+
+3.提交到远程流程：
+git pull -f origin
+git add test.txt
+git commit -a -m 'test'
+git push -u origin master:master
