@@ -1,0 +1,28 @@
+
+CC =	cc
+CFLAGS =  
+CPP =	
+LINK =	$(CC)
+
+
+CORE_DEPS = 
+
+
+CORE_INCS = 
+
+
+objs/bin/RTTest:	objs/src/core/RTTest.o
+
+	$(LINK) -o objs/bin/RTTest \
+	objs/src/core/RTTest.o \
+	objs/src/client/transport.o \
+	objs/src/json/cJSON.o \
+	-lpthread
+
+
+objs/src/core/RTTest.o:	$(CORE_DEPS) \
+	src/core/RTTest.c
+
+	$(CC) -c $(CFLAGS) $(CORE_INCS) \
+		-o objs/src/core/RTTest.o \
+		src/core/RTTest.c

@@ -1,0 +1,29 @@
+
+CC =	cc -g
+CFLAGS =  
+CPP =	
+LINK =	$(CC)
+
+
+CORE_DEPS = 
+
+
+CORE_INCS = 
+
+
+objs/bin/RTAdmin:	objs/src/core/RTAdmin.o
+
+	$(LINK) -o objs/bin/RTAdmin \
+	objs/src/core/RTAdmin.o \
+	objs/src/db/data.o \
+	objs/src/tools/base.o \
+	objs/src/md5/md5.o \
+	-lm -lsqlite3
+
+
+objs/src/core/RTAdmin.o:	$(CORE_DEPS) \
+	src/core/RTAdmin.c
+
+	$(CC) -c $(CFLAGS) $(CORE_INCS) \
+		-o objs/src/core/RTAdmin.o \
+		src/core/RTAdmin.c

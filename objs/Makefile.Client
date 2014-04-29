@@ -1,0 +1,26 @@
+
+CC =	cc
+CFLAGS =  
+CPP =	
+LINK =	$(CC)
+
+
+CORE_DEPS = 
+
+
+CORE_INCS = 
+
+
+objs/bin/RTClient:	objs/src/core/RTClient.o
+
+	$(LINK) -o objs/bin/RTClient \
+	objs/src/core/RTClient.o \
+	-lpthread
+
+
+objs/src/core/RTClient.o:	$(CORE_DEPS) \
+	src/core/RTClient.c
+
+	$(CC) -c $(CFLAGS) $(CORE_INCS) \
+		-o objs/src/core/RTClient.o \
+		src/core/RTClient.c
