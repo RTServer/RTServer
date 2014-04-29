@@ -15,7 +15,7 @@ int insert_data() {
 	int flag = 1;
 	char name[21], password[33], *pwdhash, *salt, ip[16], *datetime;
 	int rid;
-	while (flag == 1)	{		
+	while (flag == 1)	{
 		getchar();
 		printf("name:");
 		scanf("%s", name);

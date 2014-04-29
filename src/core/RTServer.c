@@ -112,8 +112,6 @@ static void closeAndFreeClient(client_t *client) {
  */
 void buffered_on_read(struct bufferevent *bev, void *arg) {
     client_t *client = (client_t *)arg;
-    char data[4096];
-    int nbytes;
 
     //errorOut("fd: %d, data: %s\n", client->fd, data);
     /*
@@ -128,6 +126,12 @@ void buffered_on_read(struct bufferevent *bev, void *arg) {
     evbuffer_write(client2->output_buffer, client2->fd);
     */
 
+    if (!client_interface(bev, client)) {
+        client_clean(client->fd);
+        closeClient((client_t *)arg);
+        //RTS_printf("客户端{index:%d}退出了\n", i);
+    }
+
 }
 
 /**
@@ -135,10 +139,6 @@ void buffered_on_read(struct bufferevent *bev, void *arg) {
  * provide this because libevent expects it, but we don't use it.
  */
 void buffered_on_write(struct bufferevent *bev, void *arg) {
-    client_t *client = (client_t *)arg;
-    char data[4096];
-    int nbytes;
-    errorOut("write: fd: %d\n", client->fd);
 }
 
 /**
@@ -327,7 +327,7 @@ int runServer(void) {
     //初始化客户端对象
     client_init();
 
-    printf("Server running.\n");
+    printf("RTServer成功运行...\n");
 
     /* Start the event loop. */
     event_base_dispatch(evbase_accept);
@@ -337,7 +337,7 @@ int runServer(void) {
 
     close(listenfd);
 
-    printf("Server shutdown.\n");
+    printf("RTServer成功关闭...\n");
 
     return 0;
 }

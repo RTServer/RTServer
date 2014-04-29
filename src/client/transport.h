@@ -13,4 +13,3 @@ typedef struct _RTS_TRANSPORT_DATA {
 
 extern int RTS_transport_data_parse(const char *buf, _RTS_TRANSPORT_DATA *_rts_transport_data);
 extern _RTS_TRANSPORT_DATA RTS_transport_data_init();
-extern int RTS_send(int sockfd, const char *content);

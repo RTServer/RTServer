@@ -9,13 +9,13 @@ RTServer
 一、项目划分：
 
 	1）主服务RTServer：
-	编译命令：gcc -o RTServer RTServer.c lib/client/interface.c lib/client/transport.c lib/tools/base.c lib/db/data.c lib/json/cJSON.c lib/md5/md5.c -lm -lsqlite3
-	启动命令：./RTServer
+	编译命令：make clean && make （加入了Makefile文件，编译轻松多了，类似nginx哦）
+	启动命令：objs/bin/RTServer
 		RTServer成功运行...
 
 	2）用户管理RTSAdmin：
-	编译命令：gcc -o RTSAdmin RTSAdmin.c lib/db/data.c lib/tools/base.c lib/md5/md5.c -lsqlite3
-	启动命令：./RTSAdmin 
+	编译命令：make clean && make
+	启动命令：objs/bin/RTSAdmin 
 		请输入代表数字：
 		0.建表
 		1.添加
@@ -26,16 +26,16 @@ RTServer
 		choose[0 - 5]:
 
 	3）简单交互客户端：
-	编译命令：gcc -o RTClient RTClient.c -lpthread
-	启动命令：./RTClient 127.0.0.1 5566
+	编译命令：make clean && make
+	启动命令：objs/bin/RTClient 127.0.0.1 5566
 		{"action":"login","name":"test1","password":"123456","id":1}
 		{"action":"message","token":"abcdefg","toid":2,"id":1,"content":"test2你好啊"}
 		{"action":"register","name":"test2","password":"123456"}
 		{"action":"logout","name":"test1","password":"123456","id":1}
 
 	4）压力测试工具：
-	编译命令：gcc -o RTTest RTTest.c lib/client/transport.c lib/json/cJSON.c -lpthread
-	启动命令：./RTTest 127.0.0.1 5566 10
+	编译命令：make clean && make
+	启动命令：objs/bin/RTTest 127.0.0.1 5566 10
 		4-接收数据:{"code":"0000","message":"登录成功","token":"92e7953a6e9a4a3c805bfde21258ca50","id":2}
 		7-接收数据:{"code":"1003","message":"该用户已经在其他地方成功登录"}
 		8-接收数据:{"code":"1003","message":"该用户已经在其他地方成功登录"}
@@ -53,7 +53,7 @@ RTServer
 
 	1）android客户端
 	2）IOS客户端
-	3）优化服务端，可能考虑采用epoll的网络模型，现在是select非阻塞方式
+	3）优化服务端(已经借助libevent，用bufferevent实现了epoll方式，并且是多线程的，但还有一些bug，慢慢修复)
 
 
 

@@ -24,7 +24,8 @@ typedef struct client {
 typedef struct _CLIENT {
     int fd;
     int id;
-    void *user_data;
+    int index;
+    void *client;
     char name[MAX_NAME_LENGTH + 1];
     char token[MAX_TOKEN_LENGTH + 1];
     struct sockaddr_in addr;
@@ -34,10 +35,13 @@ typedef struct _CLIENT {
 static _CLIENT _client[MAX_CLIENT]; //模块化全局变量_client
 char buf[MAX_BUF + 1];
 
+int client_getindex_byfd(int fd);
+
 extern void client_init();
 struct sockaddr;
 extern int client_add(int connectfd, struct sockaddr_in addr, client_t *client);
 extern int client_getconfd(int i);
-extern int client_interface(int sockfd, int i, int maxi);
-extern void client_clean(int i);
-extern void client_print(int maxi);
+extern int client_interface(struct bufferevent *bev, client_t *client);
+extern void client_clean(int fd);
+extern void client_print();
+extern int client_send(client_t *client, const char *content);

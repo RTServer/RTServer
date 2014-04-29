@@ -26,6 +26,7 @@ _RTS_USER user_init() {
  */
 int open_db() {
 	int rc;
+	sqlite3_config(SQLITE_CONFIG_SERIALIZED); //设置串行，线程安全
 	rc = sqlite3_open(DB_NAME, &pdb);
 	if (rc) {
 		fprintf(stderr, "can't open database: %s\n", sqlite3_errmsg(pdb));

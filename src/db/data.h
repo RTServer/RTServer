@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "sqlite3.h"
-#define	DB_NAME				"RTServer.db"
+#define	DB_NAME				"objs/db/RTServer.db"
 #define	TABLE_NAME_USER		"user"
 
 //定义用户数据结构

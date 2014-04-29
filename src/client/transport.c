@@ -2,6 +2,7 @@
 #include <string.h>
 #include <wchar.h>
 #include <sys/socket.h>
+#include <event.h>
 #include "transport.h"
 #include "../json/cJSON.h"
 
@@ -33,8 +34,4 @@ int RTS_transport_data_parse(const char *buf, _RTS_TRANSPORT_DATA *_rts_transpor
     //释放内存
     cJSON_Delete(json);
     return 1;
-}
-
-int RTS_send(int sockfd, const char *content) {
-    return send(sockfd, content, strlen(content), 0);
 }
