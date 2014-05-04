@@ -74,6 +74,7 @@ static int setnonblock(int fd) {
 static void closeClient(client_t *client) {
     if (client != NULL) {
         if (client->fd >= 0) {
+            client_clean(client->fd);
             close(client->fd);
             client->fd = -1;
         }
@@ -113,23 +114,8 @@ static void closeAndFreeClient(client_t *client) {
 void buffered_on_read(struct bufferevent *bev, void *arg) {
     client_t *client = (client_t *)arg;
 
-    //errorOut("fd: %d, data: %s\n", client->fd, data);
-    /*
-    client_t *client2 = client_get(8);
-    while ((nbytes = EVBUFFER_LENGTH(bev->input)) > 0) {
-        if (nbytes > 4096) nbytes = 4096;
-        evbuffer_remove(bev->input, data, nbytes);
-        evbuffer_add(client2->output_buffer, data, nbytes);
-    }
-    errorOut("read: fd: %d->%d, data: %s\n", client->fd, client2->fd, data);
-
-    evbuffer_write(client2->output_buffer, client2->fd);
-    */
-
     if (!client_interface(bev, client)) {
-        client_clean(client->fd);
         closeClient((client_t *)arg);
-        //RTS_printf("客户端{index:%d}退出了\n", i);
     }
 
 }

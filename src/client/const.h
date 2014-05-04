@@ -1,4 +1,4 @@
-#define MAX_CLIENT 1024
+#define MAX_CLIENT 10000
 #define MAX_BUF 10240
 #define MAX_NAME_LENGTH 20
 #define MAX_TOKEN_LENGTH 32

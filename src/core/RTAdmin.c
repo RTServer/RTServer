@@ -49,15 +49,17 @@ int insert_data() {
 }
 
 void user_info(int id, char *name) {
-	_RTS_USER _rts_user = user_get(id, name);
+	_RTS_USER *_rts_user = user_get(id, name);
 	printf("****************\n");
-	printf("id : %d \n", _rts_user.id);
-	printf("name : %s \n", _rts_user.name);
-	printf("password : %s \n", _rts_user.password);
-	printf("salt : %s \n", _rts_user.salt);
-	printf("datetime : %s \n", _rts_user.datetime);
-	printf("status : %d \n", _rts_user.status);
+	printf("id : %d \n", _rts_user->id);
+	printf("name : %s \n", _rts_user->name);
+	printf("password : %s \n", _rts_user->password);
+	printf("salt : %s \n", _rts_user->salt);
+	printf("datetime : %s \n", _rts_user->datetime);
+	printf("status : %d \n", _rts_user->status);
 	printf("****************\n\n");
+	free(_rts_user);
+	_rts_user = NULL;
 }
 
 int main(int argc, char **argv) {

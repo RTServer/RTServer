@@ -180,32 +180,33 @@ int client_interface(struct bufferevent *bev, client_t *client) {
                         flag = 0;
                     } else {
                         //验证用户名密码
-                        _RTS_USER _rts_user = user_get(0, _rts_transport_data.name);
-                        if (_rts_user.id > 0) {
-                            char *pwdhash = RTS_hash(_rts_transport_data.password, _rts_user.salt);
-                            if (strcmp(_rts_user.password, pwdhash) == 0) {
+                        _RTS_USER *_rts_user = user_get(0, _rts_transport_data.name);
+                        if (_rts_user->id > 0) {
+                            char *pwdhash = RTS_hash(_rts_transport_data.password, _rts_user->salt);
+                            if (strcmp(_rts_user->password, pwdhash) == 0) {
                                 //用户名密码验证通过后，判断当前账号是否已登录
                                 //这时应该已经拿到了用户的id
                                 if (strlen(_client[i].token) > 0) { //该设备已经登录了账号，不能再做登录操作
                                     client_send(client, "{\"code\":\"1004\",\"message\":\"该设备已经登录了账号，不能再做登录操作\"}");
                                 } else {
-                                    int index = client_getindex(_rts_user.id);
+                                    int index = client_getindex(_rts_user->id);
                                     if (index == -1 || _client[index].fd == -1 || strlen(_client[index].token) == 0) { //未登录，直接执行登录赋值操作
                                         //登录成功，返回认证标示
-                                        strncpy(_rts_transport_data.token, RTS_unique(), MAX_TOKEN_LENGTH);
-                                        _client[i].id = _rts_user.id;
+                                        char *unique = RTS_unique();
+                                        strncpy(_rts_transport_data.token, unique, MAX_TOKEN_LENGTH);
+                                        free(unique);
+                                        unique = NULL;
+                                        _client[i].id = _rts_user->id;
                                         strncpy(_client[i].name, _rts_transport_data.name, MAX_NAME_LENGTH);
                                         strncpy(_client[i].token, _rts_transport_data.token, MAX_TOKEN_LENGTH);
-                                        RTS_printf("%s登录成功--IP:%s\n", _rts_transport_data.name, inet_ntoa(_client[i].addr.sin_addr));
+                                        RTS_printf("登录成功: NAME:%s--IP:%s\n", _rts_transport_data.name, inet_ntoa(_client[i].addr.sin_addr));
                                         bzero(buf, MAX_BUF + 1);
-                                        sprintf(buf, "{\"code\":\"0000\",\"message\":\"登录成功\",\"token\":\"%s\",\"id\":%d}", _rts_transport_data.token, _rts_user.id);
+                                        sprintf(buf, "{\"code\":\"0000\",\"message\":\"登录成功\",\"token\":\"%s\",\"id\":%d}", _rts_transport_data.token, _rts_user->id);
                                         client_send(client, buf);
-                                        RTS_printf("login:\n");
-                                        client_print();
 
                                         //修改登录成功标识
                                         _RTS_USER _rts_user2 = user_init();
-                                        _rts_user2.id = _rts_user.id;
+                                        _rts_user2.id = _rts_user->id;
                                         _rts_user2.status = 1;
                                         user_edit(_rts_user2);
                                     } else {
@@ -222,6 +223,8 @@ int client_interface(struct bufferevent *bev, client_t *client) {
                             client_send(client, "{\"code\":\"0003\",\"message\":\"用户名或密码错误\"}");
                             flag = 0;
                         }
+                        free(_rts_user);
+                        _rts_user = NULL;
                     }
                 } else if (strcmp(_rts_transport_data.action, "message") == 0) { //聊天
                     if (strlen(_rts_transport_data.token) == 0 || !_rts_transport_data.toid || !_rts_transport_data.id || wcslen(_rts_transport_data.content) == 0) {
@@ -242,8 +245,6 @@ int client_interface(struct bufferevent *bev, client_t *client) {
                                 flag = 1;
                                 int index;
                                 index = client_getindex(_rts_transport_data.toid); //获取接受者索引
-                                RTS_printf("message:\n");
-                                client_print();
                                 if (index == -1 || _client[index].fd == -1) {
                                     client_send(client, "{\"code\":\"1002\",\"message\":\"对方不在线\"}");
                                 } else {

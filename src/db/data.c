@@ -148,8 +148,8 @@ int user_add(char *name, char *password, char *salt,
 /**
 * 获取用户信息
 */
-_RTS_USER user_get(int id, char *name) {
-	static _RTS_USER _rts_user;
+_RTS_USER *user_get(int id, char *name) {
+	_RTS_USER *_rts_user = NULL;
 	int rc = 0 ;
 	char strsql[1025];
 	
@@ -170,6 +170,11 @@ _RTS_USER user_get(int id, char *name) {
 		sqlite3_close(pdb);
 		return _rts_user;
 	}
+
+	//申请空间
+	_rts_user = (_RTS_USER *)malloc(sizeof(_RTS_USER));
+	if (_rts_user == NULL) return _rts_user;
+
 	id && sqlite3_bind_int(stmt, 1, id);
 	id || sqlite3_bind_text(stmt, 1, name, strlen(name), NULL);
 	int nColumn = sqlite3_column_count(stmt);
@@ -179,13 +184,13 @@ _RTS_USER user_get(int id, char *name) {
 		if (rc == SQLITE_ROW) {
 			for(i = 0; i < nColumn; i++) {
 				const char *colum_name = sqlite3_column_name(stmt, i);
-				(strcmp(colum_name, "id") == 0) && (_rts_user.id = sqlite3_column_int(stmt, i));
-				(strcmp(colum_name, "name") == 0) && strcpy(_rts_user.name, (char *)sqlite3_column_text(stmt, i));
-				(strcmp(colum_name, "password") == 0) && strcpy(_rts_user.password, (char *)sqlite3_column_text(stmt, i));
-				(strcmp(colum_name, "salt") == 0) && strcpy(_rts_user.salt, (char *)sqlite3_column_text(stmt, i));
-				(strcmp(colum_name, "ip") == 0) && strcpy(_rts_user.ip, (char *)sqlite3_column_text(stmt, i));
-				(strcmp(colum_name, "datetime") == 0) && strcpy(_rts_user.datetime, (char *)sqlite3_column_text(stmt, i));
-				(strcmp(colum_name, "status") == 0) && (_rts_user.status = sqlite3_column_int(stmt, i));
+				(strcmp(colum_name, "id") == 0) && (_rts_user->id = sqlite3_column_int(stmt, i));
+				(strcmp(colum_name, "name") == 0) && strcpy(_rts_user->name, (char *)sqlite3_column_text(stmt, i));
+				(strcmp(colum_name, "password") == 0) && strcpy(_rts_user->password, (char *)sqlite3_column_text(stmt, i));
+				(strcmp(colum_name, "salt") == 0) && strcpy(_rts_user->salt, (char *)sqlite3_column_text(stmt, i));
+				(strcmp(colum_name, "ip") == 0) && strcpy(_rts_user->ip, (char *)sqlite3_column_text(stmt, i));
+				(strcmp(colum_name, "datetime") == 0) && strcpy(_rts_user->datetime, (char *)sqlite3_column_text(stmt, i));
+				(strcmp(colum_name, "status") == 0) && (_rts_user->status = sqlite3_column_int(stmt, i));
 			}
 		} else if (rc == SQLITE_DONE) {
 			//printf("Select finish\n");
