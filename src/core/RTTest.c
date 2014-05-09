@@ -275,7 +275,7 @@ int main(int argc, char **argv) {
         _PORT = atoi(argv[2]);
     }
 
-    //signal(SIGPIPE, signal_callback_handler);
+    signal(SIGPIPE, signal_callback_handler);
 
     pthread_t child_thread;
     pthread_attr_t child_thread_attr;

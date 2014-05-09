@@ -75,8 +75,10 @@ char *RTS_hash(char *password, char *salt) {
     char saltpwd[39] = {0};
     strcpy(saltpwd, salt);
     strcat(saltpwd, md5str);
-    free(md5str);
-    md5str = NULL;
+    if (md5str != NULL) {
+        free(md5str);
+        md5str = NULL;
+    }
     return RTS_md5(saltpwd);
 }
 

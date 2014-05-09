@@ -194,8 +194,7 @@ int client_interface(struct bufferevent *bev, client_t *client) {
                                         //登录成功，返回认证标示
                                         char *unique = RTS_unique();
                                         strncpy(_rts_transport_data.token, unique, MAX_TOKEN_LENGTH);
-                                        free(unique);
-                                        unique = NULL;
+                                        CLIENT_FREE(unique);
                                         _client[i].id = _rts_user->id;
                                         strncpy(_client[i].name, _rts_transport_data.name, MAX_NAME_LENGTH);
                                         strncpy(_client[i].token, _rts_transport_data.token, MAX_TOKEN_LENGTH);
@@ -218,13 +217,12 @@ int client_interface(struct bufferevent *bev, client_t *client) {
                                 client_send(client, "{\"code\":\"0003\",\"message\":\"用户名或密码错误\"}");
                                 flag = 0;
                             }
-                            free(pwdhash); pwdhash = NULL;
+                            CLIENT_FREE(pwdhash);
                         } else {
                             client_send(client, "{\"code\":\"0003\",\"message\":\"用户名或密码错误\"}");
                             flag = 0;
                         }
-                        free(_rts_user);
-                        _rts_user = NULL;
+                        CLIENT_FREE(_rts_user);
                     }
                 } else if (strcmp(_rts_transport_data.action, "message") == 0) { //聊天
                     if (strlen(_rts_transport_data.token) == 0 || !_rts_transport_data.toid || !_rts_transport_data.id || wcslen(_rts_transport_data.content) == 0) {
@@ -290,9 +288,9 @@ int client_interface(struct bufferevent *bev, client_t *client) {
                         char *pwdhash = RTS_hash(_rts_transport_data.password, salt);
                         char *datetime = RTS_current_datetime();
                         _rts_transport_data.id = user_add(_rts_transport_data.name, pwdhash, salt, inet_ntoa(_client[i].addr.sin_addr), datetime, 0);
-                        free(salt); salt = NULL;
-                        free(pwdhash); pwdhash = NULL;
-                        free(datetime); datetime = NULL;
+                        CLIENT_FREE(salt);
+                        CLIENT_FREE(pwdhash);
+                        CLIENT_FREE(datetime);
                         if (_rts_transport_data.id == 0) {
                             client_send(client, "{\"code\":\"1005\",\"message\":\"注册失败,该用户名已注册\"}");
                         } else if (_rts_transport_data.id > 0) {

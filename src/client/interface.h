@@ -35,6 +35,14 @@ typedef struct _CLIENT {
 static _CLIENT _client[MAX_CLIENT]; //模块化全局变量_client
 char buf[MAX_BUF + 1];
 
+//释放内存
+#define CLIENT_FREE(pointer) { \
+    if (pointer != NULL) { \
+        free(pointer); \
+        pointer = NULL; \
+    } \
+}
+
 int client_getindex_byfd(int fd);
 
 extern void client_init();
