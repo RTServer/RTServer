@@ -312,7 +312,8 @@ int search_data() {
 	char strsql[1024];
 	memset(strsql, 0, 1024);
 	strcpy(strsql, "SELECT * FROM ");
-	strcat(strsql, TABLE_NAME_USER);;
+	strcat(strsql, TABLE_NAME_USER);
+	//strcat(strsql, " WHERE status = 1");
 
 	sqlite3_stmt  *stmt = NULL;
 

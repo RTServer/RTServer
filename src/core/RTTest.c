@@ -82,13 +82,14 @@ void *talk_to_server(void *arg) {
     sprintf(buf, "{\"action\":\"login\",\"name\":\"test%d\",\"password\":\"123456\"}", info->n);
     len = send(sockfd, buf, strlen(buf), 0);
     if(len > 0)
-        printf("%d-发送成功\n", sockfd);
+        printf("%d-发送成功-name:test%d\n", sockfd, info->n);
     else {
         printf("%d-发送失败\n", sockfd);
         close(sockfd);
         return NULL;
     }
     while (1) {
+        sleep(1);
         //printf("okok%d\n", ++i);
 
         FD_ZERO(&rfds);
@@ -113,7 +114,7 @@ void *talk_to_server(void *arg) {
         } else {
             if (FD_ISSET(sockfd, &rfds)) { 
                 bzero(buf, MAXBUF + 1);
-                len = recv(sockfd, buf, MAXBUF, 0);
+                len = recv(sockfd, buf, sizeof(buf), 0);
                 if(len > 0) {
                     printf("%d-接收数据:%s\n", sockfd, buf);
 
@@ -129,7 +130,6 @@ void *talk_to_server(void *arg) {
                     }
 
                     //接收到数据就再发，sleep 1秒
-                    sleep(1);
                     bzero(buf, MAXBUF + 1);
                     int toid = rand() / (RAND_MAX / total + 1) + 1; //随机发送
                     sprintf(buf, "{\"action\":\"message\",\"token\":\"%s\",\"toid\":%d,\"id\":%d,\"content\":\"send to %d\"}", info->_user->token, toid, info->_user->id, toid);
@@ -143,7 +143,7 @@ void *talk_to_server(void *arg) {
                     }
                 }else {
                     if(len < 0) 
-                        printf("%d-接收失败 错误号:%d，错误信息: '%s'\n", sockfd, errno, strerror(errno));
+                        printf("%d-接收失败 错误号:%d，错误信息: '%s'， recv返回值: %d\n", sockfd, errno, strerror(errno), len);
                     else
                         printf("%d-退出连接\n", sockfd);
                     break;
@@ -152,14 +152,15 @@ void *talk_to_server(void *arg) {
         }
     }
 
+    printf("%d-关闭连接\n", sockfd);
     close(sockfd);
 
     return NULL;
 }
 
 //批量添加用户
-int create_num = 20;
-int create_total_num = 100000;
+int create_num = 2;
+int create_total_num = 60000;
 void *create_test_user(void *arg) {
     int sockfd, len;
     struct sockaddr_in dest;
@@ -193,7 +194,7 @@ void *create_test_user(void *arg) {
 
     //向服务器发送一次数据，触发下面的接收事件
     bzero(buf, MAXBUF + 1);
-    sprintf(buf, "{\"action\":\"login\",\"name\":\"test0\",\"password\":\"123456\"}");
+    sprintf(buf, "{\"action\":\"register\",\"name\":\"test1\",\"password\":\"123456\"}");
     len = send(sockfd, buf, strlen(buf), 0);
     if(len > 0)
         printf("%d-发送成功\n", sockfd);
@@ -227,10 +228,10 @@ void *create_test_user(void *arg) {
         } else {
             if (FD_ISSET(sockfd, &rfds)) { 
                 bzero(buf, MAXBUF + 1);
-                len = recv(sockfd, buf, MAXBUF, 0);
+                len = recv(sockfd, buf, sizeof(buf), 0);
                 if(len > 0) {
                     printf("%d-接收数据:%s\n", sockfd, buf);
-                    if (create_num >= create_total_num) {
+                    if (create_num > create_total_num) {
                         close(sockfd);
                         return NULL;
                     }
@@ -284,7 +285,7 @@ int main(int argc, char **argv) {
 
     int i, n = atoi(argv[3]), ret;
     total = n;
-    for(i = 0; i < n; i++) {
+    for(i = 1; i <= n; i++) {
         _USER *_user = (_USER *)malloc(sizeof(_USER));
         _user->id = 0;
         memset(_user->token, 0, MAX_TOKEN_LENGTH + 1);
