@@ -43,13 +43,9 @@ char buf[MAX_BUF + 1];
     } \
 }
 
-int client_getindex_byfd(int fd);
-
 extern void client_init();
 struct sockaddr;
 extern int client_add(int connectfd, struct sockaddr_in addr, client_t *client);
-extern int client_getconfd(int i);
 extern int client_interface(struct bufferevent *bev, client_t *client);
 extern void client_clean(int fd);
-extern void client_print();
 extern int client_send(client_t *client, const char *content);

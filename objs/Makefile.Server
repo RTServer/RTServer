@@ -20,6 +20,8 @@ MD5_DEPS = src/md5/md5.h
 
 JSON_DEPS = src/json/cJSON.h
 
+HASHMAP_DEPS = src/hashmap/hashmap.h
+
 
 CORE_INCS = -I /opt/local/include \
 	-I src/core
@@ -35,6 +37,8 @@ MD5_INCS = -I src/md5
 
 JSON_INCS = -I src/json
 
+HASHMAP_INCS = -I src/hashmap
+
 
 objs/bin/RTServer:	objs/src/core/RTServer.o \
 	objs/src/core/workqueue.o \
@@ -43,7 +47,8 @@ objs/bin/RTServer:	objs/src/core/RTServer.o \
 	objs/src/db/data.o \
 	objs/src/tools/base.o \
 	objs/src/md5/md5.o \
-	objs/src/json/cJSON.o
+	objs/src/json/cJSON.o \
+	objs/src/hashmap/hashmap.o
 
 	$(LINK) -o objs/bin/RTServer \
 	objs/src/core/RTServer.o \
@@ -54,6 +59,7 @@ objs/bin/RTServer:	objs/src/core/RTServer.o \
 	objs/src/tools/base.o \
 	objs/src/md5/md5.o \
 	objs/src/json/cJSON.o \
+	objs/src/hashmap/hashmap.o \
 	-L/opt/local/lib -levent -lpthread -lm -lsqlite3
 
 
@@ -120,3 +126,11 @@ objs/src/json/cJSON.o:	$(JSON_DEPS) \
 	$(CC) -c $(CFLAGS) $(JSON_INCS) \
 		-o objs/src/json/cJSON.o \
 		src/json/cJSON.c
+
+
+objs/src/hashmap/hashmap.o:	$(HASHMAP_DEPS) \
+	src/hashmap/hashmap.c
+
+	$(CC) -c $(CFLAGS) $(HASHMAP_INCS) \
+		-o objs/src/hashmap/hashmap.o \
+		src/hashmap/hashmap.c

@@ -89,9 +89,6 @@ void *talk_to_server(void *arg) {
         return NULL;
     }
     while (1) {
-        sleep(1);
-        //printf("okok%d\n", ++i);
-
         FD_ZERO(&rfds);
         maxfd = 0;
 
@@ -130,6 +127,7 @@ void *talk_to_server(void *arg) {
                     }
 
                     //接收到数据就再发，sleep 1秒
+                    sleep(1);
                     bzero(buf, MAXBUF + 1);
                     int toid = rand() / (RAND_MAX / total + 1) + 1; //随机发送
                     sprintf(buf, "{\"action\":\"message\",\"token\":\"%s\",\"toid\":%d,\"id\":%d,\"content\":\"send to %d\"}", info->_user->token, toid, info->_user->id, toid);
