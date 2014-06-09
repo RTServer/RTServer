@@ -8,7 +8,8 @@ clean:
 		objs/src/db/* \
 		objs/src/md5/* \
 		objs/src/tools/* \
-		objs/src/json/*
+		objs/src/json/* \
+		objs/src/hashmap/*
 
 build:
 	$(MAKE) -f objs/Makefile.Server
